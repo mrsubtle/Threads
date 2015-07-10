@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Shout</title>
+	<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+	<menu class="menu-left">
+		<group>
+			<img src="img/menu-logo.svg" id="brand">
+		</group>
+		<group>
+			<i id="btn_menu_locations" class="iconText touchable">
+				<img src="img/menu-locations.svg">
+				<label>
+					All Locations
+				</label>
+			</i>
+			<i id="btn_menu_favs" class="iconText touchable">
+				<img src="img/menu-favs.svg">
+				<label>
+					Favourites
+				</label>
+			</i>
+			<i id="btn_menu_realtor" class="iconText touchable">
+				<img src="img/menu-realtor.svg">
+				<label>
+					Realtor
+				</label>
+			</i>
+			<i id="btn_menu_settings" class="iconText touchable">
+				<img src="img/menu-settings.svg">
+				<label>
+					Settings
+				</label>
+			</i>
+		</group>
+		<group>
+			<i id="btn_menu_logout" class="iconText touchable">
+				<img src="img/menu-logout.svg">
+				<label>
+					Sign out
+				</label>
+			</i>
+		</group>
+	</menu>
+
+	<app class="">
+		<modal id="addLocation" class="viewportBottom">
+			<top>
+				<i id="btn_cancel" class="item touchable">
+					<img src="img/btn-modal-cancel.svg">
+				</i>
+				<i id="btn_save" class="item touchable">
+					<img src="img/btn-modal-save.svg">
+				</i>
+			</top>
+			<content class="inputForm">
+				<tabs>
+					<tab class="active" for="details">Details</tab>
+					<tab for="images">Images</tab>
+				</tabs>
+				<tabgroup id="details" class="hidden">
+					<form id="frm_details">
+						<fieldset>
+							<input id="txt_name" type="text" placeholder="Dream home" autocorrect="on" autocapitalize="sentence">
+						</fieldset>
+						<fieldset>
+							<input id="txt_address1" type="text" placeholder="1234 Some Way" autocorrect="off" autocapitalize="sentence">
+							<input id="txt_city" type="text" placeholder="Heresville" autocorrect="on" autocapitalize="sentence">
+							<input id="txt_lat" type="hidden">
+							<input id="txt_lng" type="hidden">
+							<input id="txt_country" type="hidden">
+							<input id="txt_region" type="hidden">
+							<input id="txt_code" type="hidden">
+						</fieldset>
+						<fieldset>
+							<header>Near you</header>
+							<results></results>
+						</fieldset>
+					</form>
+				</tabgroup>
+				<tabgroup id="images" class="hidden">
+					image list here
+				</tabgroup>
+			</content>
+		</modal>
+		<screen id="login" class="hidden">
+			<middle>
+				<child>
+					<img src="img/nav-logo.svg" id="brand">
+					<form id="frm_login">
+						<fieldset>
+							<input id="txt_user" type="text" placeholder="username" autocorrect="off" autocapitalize="none">
+							<input id="txt_pass" type="password" placeholder="password">
+							<button id="btn_login" class="primary touchable" type="submit">LOGIN</button>
+						</fieldset>
+					</form>
+					<div id="feedback_login">&nbsp;</div>
+					<a class="touchable hidden" href="#">Forgot your password?</a>
+				</child>
+				<child>
+					<button id="btn_goToSignup" class="text touchable" data-preface="New here?">CREATE AN ACCOUNT</button>
+				</child>
+			</middle>
+		</screen>
+		<screen id="signup" class="hidden">
+			<middle>
+				<child>
+					<img src="img/nav-logo.svg" id="brand">
+				</child>
+				<child>
+					<form id="frm_signup">
+						<fieldset>
+							<input id="txt_fName" type="text" placeholder="First name (for greetings)">
+							<br>
+							<input id="txt_uName" type="text" placeholder="User.name.00" autocorrect="off" autocapitalize="none">
+							<input id="txt_email" type="text" placeholder="you@server.net" autocorrect="off" autocapitalize="none">
+							<br>
+							<input id="txt_pass1" type="password" placeholder="password">
+							<input id="txt_pass2" type="password" placeholder="confirm">
+						</fieldset>
+					</form>
+				</child>
+				<child>
+					<horizontalButtonGroup>
+						<button id="btn_cancel" class="textMinor touchable">Cancel</button>
+						<button id="btn_submit" form="frm_signup" class="text touchable" type="submit" disabled>Submit</button>
+					</horizontalButtonGroup>
+				</child>
+			</middle>
+		</screen>
+		<screen id="start" class="hasNav hasBottom hidden">
+			<nav>
+				<left>
+					<i id="btn_toggleMenu" class="touchable">
+						<img src="img/nav-menu.svg">
+					</i>
+				</left>
+				<title>All Locations</title>
+				<right>
+					<i id="btn_refreshDistance" class="touchable">
+						<img src="img/nav-refresh.svg">
+					</i>
+				</right>
+			</nav>
+			<content>
+			</content>
+			<bottom>
+				<button id="btn_addLocation" class="action touchable">
+					<img src="img/btn-add.svg" id="">
+				</button>
+			</bottom>
+		</screen>
+	</app>
+
+	<script id="tpl_card" type="text/template">
+		<card>
+			<directions data-lon="<%= geo.longitude %>" data-lat="<%= geo.latitude %>">
+				<i class="touchable">
+					<img src="img/btn-directions.svg">
+				</i>
+			</directions>
+			<label>
+				<address><%= address %></address>
+				<distance><%= d %>&nbsp;km, about <%= t %> minute<% if(t == 1){print('')}else{print('s')} %></distance>
+			</label>
+		</card>
+	</script>
+	<script id="tpl_modal-addLocation_data-item" type="text/template">
+		<item data-id="<%= sequence %>" data-lat="<%= geometry.location.lat %>" data-lon="<%= geometry.location.lng %>">
+			<%= formatted_address %>
+		</item>
+	</script>
+
+	<script src="cordova.js"></script>
+	<script src="js/lib/underscore-min.js"></script>
+	<script src="js/lib/backbone-min.js"></script>
+	<script src="js/lib/jquery-2.1.1.min.js"></script>
+	<script src="js/lib/hammer.min.js"></script>
+	<script src="js/lib/jquery.hammer.js"></script>
+	<script src="js/lib/parse-1.4.2.min.js"></script>
+	<script src="js/core.min.js"></script>
+	<script>
+		//GA Tracking code
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+		ga('create', 'UA-60588713-3', 'auto');
+		ga('send', 'pageview');
+	</script>
+</body>
+</html>

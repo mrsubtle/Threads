@@ -1,0 +1,34 @@
+{
+  "name": "com.n2d.Domicila",
+  "version": "1.0.0",
+  "description": "Property manager for home buyers.",
+  "main": "Gruntfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Richard Bennett",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrsubtle/com.n2d.Domicila.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mrsubtle/com.n2d.Domicila/issues"
+  },
+  "homepage": "https://github.com/mrsubtle/com.n2d.Domicila",
+  "keywords": [
+    "app"
+  ],
+  "devDependencies": {
+    "grunt": "~0.4.5",
+    "grunt-contrib-concat": "0.5.1",
+    "grunt-contrib-copy": "0.7.0",
+    "grunt-contrib-jshint": "~0.10.0",
+    "grunt-contrib-less": "1.0.0",
+    "grunt-contrib-nodeunit": "~0.4.1",
+    "grunt-contrib-uglify": "~0.5.0",
+    "grunt-contrib-watch": "~0.6.1",
+    "grunt-http-server": "^1.2.0",
+    "jit-grunt": "~0.7.0"
+  }
+}
