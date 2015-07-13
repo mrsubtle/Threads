@@ -5,6 +5,7 @@
 	};
 	objectVersion = 46;
 	objects = {
+
 /* Begin PBXBuildFile section */
 		08E43E2772A84F5492739EA6 /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20441D634ADA415E900059F1 /* CoreLocation.framework */; };
 		152F06ECFB364272A666072D /* CDVConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = BF26CBB7CE0741D295541D51 /* CDVConnection.m */; };
@@ -48,6 +49,9 @@
 		7E7966E51810823500FA85AD /* icon-76@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 7E7966DB1810823500FA85AD /* icon-76@2x.png */; };
 		7E7966E61810823500FA85AD /* icon-small.png in Resources */ = {isa = PBXBuildFile; fileRef = 7E7966DC1810823500FA85AD /* icon-small.png */; };
 		7E7966E71810823500FA85AD /* icon-small@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 7E7966DD1810823500FA85AD /* icon-small@2x.png */; };
+		8206218C1B53F4DD0028A92B /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8206218B1B53F4DD0028A92B /* Images.xcassets */; };
+		8206218E1B53F5910028A92B /* Launch Screen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8206218D1B53F5910028A92B /* Launch Screen.xib */; };
+		820621901B53F5EA0028A92B /* launch@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8206218F1B53F5EA0028A92B /* launch@2x.png */; };
 		A8A3AB1BE05847E288E58B03 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 119A0FEDDE334D97821C63FD /* SystemConfiguration.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		B716D5F3231740BEAFA4D203 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F743B297C5D9497F8DCD2EA8 /* ImageIO.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		B87183FF915944A0A86E763D /* CDVLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CAA35879AEF42A9AAF187A0 /* CDVLogger.m */; };
@@ -126,6 +130,9 @@
 		7E7966DB1810823500FA85AD /* icon-76@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-76@2x.png"; sourceTree = "<group>"; };
 		7E7966DC1810823500FA85AD /* icon-small.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-small.png"; sourceTree = "<group>"; };
 		7E7966DD1810823500FA85AD /* icon-small@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "icon-small@2x.png"; sourceTree = "<group>"; };
+		8206218B1B53F4DD0028A92B /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Shout/Images.xcassets; sourceTree = SOURCE_ROOT; };
+		8206218D1B53F5910028A92B /* Launch Screen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = "Launch Screen.xib"; sourceTree = "<group>"; };
+		8206218F1B53F5EA0028A92B /* launch@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "launch@2x.png"; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Shout-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "Shout-Info.plist"; path = "../Shout-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
 		9D5E00483C9C4B1F80D2E07C /* CDVJpegHeaderWriter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CDVJpegHeaderWriter.m; path = "cordova-plugin-camera/CDVJpegHeaderWriter.m"; sourceTree = "<group>"; };
 		B6CA34176D5C441ABD7C0906 /* CDVVibration.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CDVVibration.m; path = "cordova-plugin-vibration/CDVVibration.m"; sourceTree = "<group>"; };
@@ -175,6 +182,7 @@
 				302D95F014D2391D003F00A1 /* MainViewController.xib */,
 				1D3623240D0F684500981E51 /* AppDelegate.h */,
 				1D3623250D0F684500981E51 /* AppDelegate.m */,
+				8206218D1B53F5910028A92B /* Launch Screen.xib */,
 			);
 			name = Classes;
 			path = Shout/Classes;
@@ -219,6 +227,8 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				8206218F1B53F5EA0028A92B /* launch@2x.png */,
+				8206218B1B53F4DD0028A92B /* Images.xcassets */,
 				308D052D1370CCF300D202BF /* icons */,
 				308D05311370CCF300D202BF /* splash */,
 				8D1107310486CEB800E47090 /* Shout-Info.plist */,
@@ -404,6 +414,7 @@
 			files = (
 				7E7966E41810823500FA85AD /* icon-76.png in Resources */,
 				7E7966DF1810823500FA85AD /* icon-40@2x.png in Resources */,
+				8206218E1B53F5910028A92B /* Launch Screen.xib in Resources */,
 				308D05371370CCF300D202BF /* icon-72.png in Resources */,
 				30B4F30119D5E07200D9F7D8 /* Default-736h.png in Resources */,
 				308D05381370CCF300D202BF /* icon.png in Resources */,
@@ -411,6 +422,7 @@
 				302D95F214D2391D003F00A1 /* MainViewController.xib in Resources */,
 				7E7966E01810823500FA85AD /* icon-50.png in Resources */,
 				7E7966E31810823500FA85AD /* icon-60@2x.png in Resources */,
+				8206218C1B53F4DD0028A92B /* Images.xcassets in Resources */,
 				7E7966E61810823500FA85AD /* icon-small.png in Resources */,
 				3088BBBD154F3926009F9C59 /* Default-Landscape@2x~ipad.png in Resources */,
 				3088BBBE154F3926009F9C59 /* Default-Landscape~ipad.png in Resources */,
@@ -429,6 +441,7 @@
 				7E7966E51810823500FA85AD /* icon-76@2x.png in Resources */,
 				30FC414916E50CA1004E6F35 /* icon-72@2x.png in Resources */,
 				4C2EA4A3C2EA498586B5D75F /* CDVNotification.bundle in Resources */,
+				820621901B53F5EA0028A92B /* launch@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -488,6 +501,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -519,6 +533,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COPY_PHASE_STRIP = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;

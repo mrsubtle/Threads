@@ -1,7 +1,7 @@
 {
-  "name": "com.n2d.Domicila",
+  "name": "com.n2d.Shout",
   "version": "1.0.0",
-  "description": "Property manager for home buyers.",
+  "description": "Impromptu social event broadcaster.",
   "main": "Gruntfile.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,12 +10,12 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mrsubtle/com.n2d.Domicila.git"
+    "url": "https://github.com/mrsubtle/Threads.git"
   },
   "bugs": {
-    "url": "https://github.com/mrsubtle/com.n2d.Domicila/issues"
+    "url": "https://github.com/mrsubtle/Threads/issues"
   },
-  "homepage": "https://github.com/mrsubtle/com.n2d.Domicila",
+  "homepage": "https://github.com/mrsubtle/Threads",
   "keywords": [
     "app"
   ],
