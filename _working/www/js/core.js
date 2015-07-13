@@ -10,9 +10,9 @@ var meta = {
 	keys : {
 		google : {
 			//ios : "AIzaSyCNLRT_u09YBOx-SL76CAZny2Z3xtOQn64",
-			ios : "AIzaSyAYfY4a-BeFVOLsgW2EudijdAV9GCmAXx4",
-			web : "AIzaSyAYfY4a-BeFVOLsgW2EudijdAV9GCmAXx4",
-			android : "AIzaSyAYfY4a-BeFVOLsgW2EudijdAV9GCmAXx4",
+			ios : "AIzaSyC7FWam14hsOU1P_FDtqIDPaUTwiKXPtmg",
+			web : "AIzaSyC7FWam14hsOU1P_FDtqIDPaUTwiKXPtmg",
+			android : "AIzaSyC7FWam14hsOU1P_FDtqIDPaUTwiKXPtmg",
 			current : ""
 		},
 		parse : {
@@ -50,6 +50,8 @@ var meta = {
 			lat : 49.9362962
 		}
 	],
+	googleMapsScriptLoaded : false,
+	googlePlacesScriptLoaded : false,
 	userLocation : {},
 	userLocality : null,
 	lastLocationSearch : {},
@@ -103,6 +105,14 @@ var app = {
 		document.addEventListener('deviceready', this.onDeviceReady, false);
 		document.addEventListener('online', function(){
 			meta.deviceOnline = true;
+			if (meta.googleMapsScriptLoaded === false) {
+				var googleMapsScript = document.createElement('script');
+				googleMapsScript.type = 'text/javascript';
+				googleMapsScript.src = 'https://maps.googleapis.com/maps/api/js?v=3.exp?libraries=places?key='+meta.keys.google.current;
+				document.body.appendChild(googleMapsScript);
+				meta.googleMapsScriptLoaded = true;
+				meta.googlePlacesScriptLoaded = true;
+			}
 		}, false);
 		document.addEventListener('offline', function(){
 			meta.deviceOnline = false;

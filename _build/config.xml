@@ -5,7 +5,7 @@
         Shout App.
     </description>
     <author email="rich@blackagency.co" href="http://blackagency.co">
-        Black Digital Agency, Inc. and NO2DESIGNCO.
+        Richard Bennett from Black Digital Agency, Inc. and NO2DESIGNCO.
     </author>
     <content src="index.html" />
     <preference name="permissions" value="none" />
@@ -61,13 +61,13 @@
     </feature>
 
     <!-- ADDED PLUGINS
-        cordova plugin add org.apache.cordova.device
-        cordova plugin add org.apache.cordova.camera
-        cordova plugin add org.apache.cordova.console
-        cordova plugin add org.apache.cordova.dialogs
-        cordova plugin add org.apache.cordova.geolocation
-        cordova plugin add org.apache.cordova.network-information
-        cordova plugin add org.apache.cordova.vibration
+        phonegap plugin add cordova-plugin-device
+        phonegap plugin add cordova-plugin-camera
+        phonegap plugin add cordova-plugin-console
+        phonegap plugin add cordova-plugin-dialogs
+        phonegap plugin add cordova-plugin-geolocation
+        phonegap plugin add cordova-plugin-network-information
+        phonegap plugin add cordova-plugin-vibration
     -->
 
     <gap:plugin name="org.apache.cordova.battery-status" />
