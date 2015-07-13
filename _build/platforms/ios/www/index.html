@@ -156,18 +156,15 @@
 		</screen>
 	</app>
 
-	<script id="tpl_card" type="text/template">
-		<card>
-			<directions data-lon="<%= geo.longitude %>" data-lat="<%= geo.latitude %>">
-				<i class="touchable">
-					<img src="img/btn-directions.svg">
-				</i>
-			</directions>
-			<label>
-				<address><%= address %></address>
-				<distance><%= d %>&nbsp;km, about <%= t %> minute<% if(t == 1){print('')}else{print('s')} %></distance>
-			</label>
-		</card>
+	<script id="tpl_event" type="text/template">
+		<item>
+			<name>
+				<%= name %>
+			</name>
+			<date>
+				<%= eventFromNow %>
+			</date>
+		</item>
 	</script>
 	<script id="tpl_modal-addLocation_data-item" type="text/template">
 		<item data-id="<%= sequence %>" data-lat="<%= geometry.location.lat %>" data-lon="<%= geometry.location.lng %>">
@@ -182,6 +179,7 @@
 	<script src="js/lib/hammer.min.js"></script>
 	<script src="js/lib/jquery.hammer.js"></script>
 	<script src="js/lib/parse-1.4.2.min.js"></script>
+	<script src="js/lib/moment.min.js"></script>
 	<script src="js/core.min.js"></script>
 	<script>
 		//GA Tracking code

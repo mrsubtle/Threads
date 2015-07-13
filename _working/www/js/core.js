@@ -285,77 +285,40 @@ var views = {
 				$('screen#start #btn_refreshDistance').addClass('disabled');
 				$('screen#start #btn_refreshDistance').addClass('infiniteSpin');
 				if (forceDataUpdate) { $('screen#start content').html( 'Loading...' ); }
-				var useHTMLgeo = true;
-				if ( meta.deviceReady ) {
-					useHTMLgeo = false;
-				}
 				//DEBUG
 				//console.log('STEP');
-				utility.deferredGetLocation(useHTMLgeo,forceDataUpdate).done(function(gp){
-					var geoQ = new Parse.Query(Parse.Object.extend('Locations'));
-					geoQ.near('Geo', gp);
-					geoQ.find({
-						success : function(data){
-							//DEBUG
-							//console.log(data);
-							meta.locations = Parse.Collection.extend({
-								model: Parse.Object.extend('Locations')
-							});
-							var nearbyLocations = new meta.locations();
-							nearbyLocations.fetch({
-								success : function(data){
-									//reset the list content
-									$('screen#start content').html( '' );
-									var t = _.template( $('#tpl_card').html() );
-									var a = [];
-									_.each(data.models, function(e,i,l){
-										// e = individual object
-										// i = array index ##
-										// l = passed array
-										var o = {};
-										o.geo = e.get('Geo');
-										o.name = e.get('Name');
-										o.address = e.get('Address1');
-										o.d = utility.getDist(o.geo.longitude, o.geo.latitude);
-										o.t = utility.getTimeToDist(o.d);
-										a.push(o);
-										//populate the list
-										//$('screen#start content').append( t(o) );
-									});
-									a = _.sortBy(a, function(e){ return e.d });
-									_.each(a, function(e,i,l){
-										//populate the list
-										$('screen#start content').append( t(e) );
-										setTimeout(function(){
-											$('screen#start content card').addClass('visible');
-										},1750);
-									});
-									touch.reset();
-									views.screens.start.remE().done(views.screens.start.addE);
-								},
-								error : function(data, error){
-									//reset the list content
-									$('screen#start content').html( 'Could not load your Locations' );
-									console.log('Failed creating nearby collection');
-									console.log(error);
-								}
-							});
-						},
-						error : function(data,error){
-							$('screen#start content').html( 'Could not load your Locations' );
-							console.log('Error querying Locations')
-							console.log(error)
-						}
-					});
-				}).fail(function(error){
-					$('screen#start content').html( 'Could not load your current location.' );
-					if(error.message){
-						$('screen#start content').append('  '+error.message);
+				//clear on-screen list
+				$('screen#start content').html('');
+				// load event template
+				var t = _.template( $('#tpl_event').html() );
+				//retrieve data from Parse
+				var Event = Parse.Object.extend("Event");
+				var queryUpcoming = new Parse.Query(Event);
+				var now = new Date();
+				queryUpcoming.equalTo('createdBy',Parse.User.current());
+				queryUpcoming.greaterThanOrEqualTo('eventAt', now);
+				queryUpcoming.ascending('eventAt');
+				queryUpcoming.find({
+					success: function(results) {
+						console.log('Successfully retrieved future Events for current user');
+						_.each(results,function(o,i,a){
+							// o = individual object
+							// i = array index ##
+							// a = full array
+							console.log(o);
+							console.log(i);
+							// build display object
+							var dO = {}
+							dO.name = o.get('name');
+							dO.eventFromNow = moment(o.get('eventAt')).fromNow();
+							$('screen#start content').append( t(dO) );
+						});
+						$('screen#start #btn_refreshDistance').removeClass('disabled');
+						$('screen#start #btn_refreshDistance').removeClass('infiniteSpin');
+					},
+					error: function(error){
+						console.error(error);
 					}
-					console.error(error);
-				}).always(function(){
-					$('screen#start #btn_refreshDistance').removeClass('disabled');
-					$('screen#start #btn_refreshDistance').removeClass('infiniteSpin');
 				});
 			},
 			render : function(){
