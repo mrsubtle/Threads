@@ -87,6 +87,40 @@
 				</tabgroup>
 			</content>
 		</modal>
+		<modal id="eventDetail" class="panel viewportBottom">
+			<top>
+				<navbar>
+					<left>
+						<i id="btn_back" class="icon touchable">
+							<img src="img/nav-back.svg">
+						</i>
+					</left>
+					<right>
+						<i id="btn_attendees" class="iconNumber touchable">
+							<label><!-- replaced by query --></label>
+						</i>
+					</right>
+				</navbar>
+				<event>
+					<date>
+						<fromnow></fromnow>
+						<fulldate></fulldate>
+					</date>
+					<name></name>
+				</event>
+			</top>
+			<content></content>
+			
+			<bottom>
+				<form id="frm_eventMessage" class="hidden">
+					<input id="txt_text" type="text">
+					<button id="btn_sendMessage" type="submit">Send</button>
+				</form>
+				<button id="btn_attendEvent" class="action touchable hidden">
+					<img src="img/btn-add.svg" id="">
+				</button>
+			</bottom>
+		</modal>
 		<screen id="login" class="hidden">
 			<middle>
 				<child>
@@ -141,13 +175,31 @@
 				</left>
 				<title></title>
 				<right>
-					<i id="btn_refreshDistance" class="touchable">
+					<i id="btn_refreshData" class="touchable">
 						<img src="img/nav-refresh.svg">
 					</i>
 				</right>
 			</nav>
+
 			<content>
+				<group id="nextEvents">
+					<groupHeader>
+						Coming up
+					</groupHeader>
+					<list>
+						No events coming up in the next two days.<br><br>Why not create one?
+					</list>
+				</group>
+				<group id="nearbyEvents">
+					<groupHeader>
+						Happening nearby
+					</groupHeader>
+					<list>
+						No events nearby.<br><br>Create one now!
+					</list>
+				</group>
 			</content>
+
 			<bottom>
 				<button id="btn_addLocation" class="action touchable">
 					<img src="img/btn-add.svg" id="">
@@ -156,8 +208,8 @@
 		</screen>
 	</app>
 
-	<script id="tpl_event" type="text/template">
-		<item>
+	<script id="tpl_eventListItem" type="text/template">
+		<item class="touchable" data-id="<%= id %>">
 			<name>
 				<%= name %>
 			</name>
@@ -165,6 +217,16 @@
 				<%= eventFromNow %>
 			</date>
 		</item>
+	</script>
+	<script id="tpl_eventMessage" type="text/template">
+		<message data-id="<%= id %>">
+			<detail>
+				<user><%= userName %></user>,&nbsp;<date><%= date %></date>
+			</detail>
+			<text>
+				<%= text %>
+			</text>
+		</message>
 	</script>
 	<script id="tpl_modal-addLocation_data-item" type="text/template">
 		<item data-id="<%= sequence %>" data-lat="<%= geometry.location.lat %>" data-lon="<%= geometry.location.lng %>">

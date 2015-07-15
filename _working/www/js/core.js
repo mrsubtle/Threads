@@ -2,6 +2,32 @@
  * core.js v1.0.0
  */
 
+// Modify Date object to include an addHours and subHours functions
+Date.prototype.addHours= function(h){
+	this.setHours(this.getHours()+h);
+	return this;
+}
+Date.prototype.subHours= function(h){
+	this.setHours(this.getHours()-h);
+	return this;
+}
+Date.prototype.addMinutes= function(m){
+	this.setMinutes(this.getMinutes()+m);
+	return this;
+}
+Date.prototype.subMinutes= function(m){
+	this.setMinutes(this.getMinutes()-m);
+	return this;
+}
+Date.prototype.addSeconds= function(s){
+	this.setSeconds(this.getSeconds()+s);
+	return this;
+}
+Date.prototype.subSeconds= function(s){
+	this.setSeconds(this.getSeconds()-s);
+	return this;
+}
+
 var strings = {
 	loginFail : "Login details do not exist. /sadface"
 };
@@ -22,7 +48,17 @@ var meta = {
 			RESTAPIKey : "8vaBSrqmVD0Ie46WW8ttpU37F2YGN3g9KX8dy2k0"
 		}
 	},
-	locations : [],
+	userAttendance : [],
+	userAttendanceLastRetrieved : new Date().setFullYear(2000,0,1),
+	userEventsNearby : [],
+	userEventsNearbyLastRetrieved : new Date().setFullYear(2000,0,1),
+	lastEvent : {},
+	lastEventMessages : {},
+	lastEventMessagesTimestamp : new Date().setFullYear(2000,0,1),
+	lastEventMessageAt : new Date().setFullYear(2000,0,1),
+	lastEventAttendance : {},
+	lastEventAttendanceTimestamp : new Date().setFullYear(2000,0,1),
+	lastEventUserAttending : false,
 	oldLocations : [
 		{
 			a : "324 St. Johns Avenue",
@@ -133,6 +169,11 @@ var views = {
 	initialize: function(screen) {
 		console.log('View inits');
 		menu.initialize();
+
+		//UI modifiers
+			//set black application BG
+			$('body').css('background-color','#000');
+
 		// check if there is an active session
 		if ( Parse.User.current() ) {
 			// init all the in-app views
@@ -282,44 +323,64 @@ var views = {
 				views.screens.start.getData();
 			},
 			getData : function(forceDataUpdate){
-				$('screen#start #btn_refreshDistance').addClass('disabled');
-				$('screen#start #btn_refreshDistance').addClass('infiniteSpin');
-				if (forceDataUpdate) { $('screen#start content').html( 'Loading...' ); }
-				//DEBUG
-				//console.log('STEP');
-				//clear on-screen list
-				$('screen#start content').html('');
-				// load event template
-				var t = _.template( $('#tpl_event').html() );
-				//retrieve data from Parse
-				var Event = Parse.Object.extend("Event");
-				var queryUpcoming = new Parse.Query(Event);
-				var now = new Date();
-				queryUpcoming.equalTo('createdBy',Parse.User.current());
-				queryUpcoming.greaterThanOrEqualTo('eventAt', now);
-				queryUpcoming.ascending('eventAt');
-				queryUpcoming.find({
-					success: function(results) {
-						console.log('Successfully retrieved future Events for current user');
-						_.each(results,function(o,i,a){
-							// o = individual object
-							// i = array index ##
-							// a = full array
-							console.log(o);
-							console.log(i);
-							// build display object
-							var dO = {}
-							dO.name = o.get('name');
-							dO.eventFromNow = moment(o.get('eventAt')).fromNow();
-							$('screen#start content').append( t(dO) );
+				$('screen#start #btn_refreshData').addClass('disabled');
+				$('screen#start #btn_refreshData').addClass('infiniteSpin');
+				if (forceDataUpdate || meta.userAttendanceLastRetrieved <= new Date().subMinutes(5) || meta.userEventsNearbyLastRetrieved <= new Date().subMinutes(15)) { 
+					//force the data update
+					//get #nextEvents attendance data
+						//Indicate loading
+						$('screen#start content #nextEvents list').html('Loading data...');
+						// load event template
+						var t = _.template( $('#tpl_eventListItem').html() );
+
+						//retrieve data from Parse
+						var Event = Parse.Object.extend("Event");
+						var Attendance = Parse.Object.extend("Attendance");
+
+						//define Attendance object query
+						var attendanceQuery = new Parse.Query(Attendance);
+						attendanceQuery.equalTo('user', Parse.User.current());
+						attendanceQuery.equalTo('status', 1); // status 1=accept 2=maybe 3=decline 0=unknown
+						attendanceQuery.include('event');
+						attendanceQuery.find({
+							success: function(results) {
+								console.log('Successfully retrieved accepted Attendance records for current user');
+								meta.userAttendance = _.sortBy(results, function(i){ return i.get('event').get('eventAt'); });
+								//clear the list
+								$('screen#start content #nextEvents list').html('');
+								_.each(meta.userAttendance,function(o,i,a){
+									// o = individual object
+									// i = array index ##
+									// a = full array
+									// get the event associated with this attendance object
+									var e = o.get('event');
+									if (e.get('eventAt') >= new Date().subHours(2) && e.get('eventAt') <= new Date().addHours(24)){
+										// build display object
+										var dO = {}
+										dO.id = e.id;
+										dO.name = e.get('name');
+										dO.eventFromNow = moment(e.get('eventAt')).fromNow();
+										$('screen#start content #nextEvents list').append( t(dO) );
+									}
+								});
+								//add event handlers for generated list items
+								$.when( views.screens.start.remListE() ).done( views.screens.start.addListE() );
+								//remove loading indicators
+								$('screen#start #btn_refreshData').removeClass('disabled');
+								$('screen#start #btn_refreshData').removeClass('infiniteSpin');
+							},
+							error: function(error){
+								console.error(error);
+							}
 						});
-						$('screen#start #btn_refreshDistance').removeClass('disabled');
-						$('screen#start #btn_refreshDistance').removeClass('infiniteSpin');
-					},
-					error: function(error){
-						console.error(error);
-					}
-				});
+
+						//define Nearby Event query
+						/*
+						var nearbyEventQuery = new Parse.Query(Event);
+						nearbyEventQuery.equalTo('public', true);
+						nearbyEventQuery.include('event');
+						*/
+				}
 			},
 			render : function(){
 				$('app screen').addClass('hidden');
@@ -331,7 +392,7 @@ var views = {
 			remE : function(){
 				return $.Deferred(function(f){
 					$('screen#start #btn_toggleMenu').hammer().off('tap');
-					$('screen#start #btn_refreshDistance').hammer().off('tap');
+					$('screen#start #btn_refreshData').hammer().off('tap');
 					$('screen#start #btn_addLocation').hammer().off('tap');
 					$('screen#start content card').hammer().off('tap');
 					f.resolve();
@@ -343,7 +404,7 @@ var views = {
 						$(this).addClass('spinFaceUp');
 						setTimeout(menu.show,300);
 					});
-					$('screen#start #btn_refreshDistance').hammer().on('tap',function(){
+					$('screen#start #btn_refreshData').hammer().on('tap',function(){
 						views.screens.start.getData(true);
 					});
 					$('screen#start #btn_addLocation').hammer().on('tap',function(){
@@ -355,209 +416,256 @@ var views = {
 					});
 					f.resolve();
 				});
-			}
-		}
-	},
-	modals : {
-		addLocation : {
-			initialize : function(){
-				$.when( views.modals.addLocation.remE() ).done( views.modals.addLocation.addE() );
-			},
-			show : function(){
-				var Location = Parse.Object.extend("Locations");
-				meta.tempLocation = new Location();
-				views.modals.addLocation.getNearbyLocations();
-				$('screen').not('.hidden').addClass('fadeAway');
-				//$('modal#addLocation top #btn_save').addClass('disabled');
-				$('modal#addLocation').removeClass('viewportBottom');
-				$('modal#addLocation tabgroup#'+$('modal#addLocation tab.active').attr('for') ).removeClass('hidden');
-			},
-			hide : function(){
-				$('modal#addLocation').addClass('viewportBottom');
-				$('screen').not('.hidden').removeClass('fadeAway');
-				setTimeout(function(){
-					$('modal#addLocation content tabgroup').addClass('hidden');
-				},1000);
-			},
-			getNearbyLocations : function(){
-				console.log('getNearbyLocations');
-				var useHTMLgeo = true;
-				//if (forceDataUpdate) { $('screen#start content').html( 'Loading...' ); }
-				var useHTMLgeo = true;
-				if ( meta.deviceReady ) {
-					useHTMLgeo = false;
-				}
-				utility.deferredGetLocation(useHTMLgeo).done(function(geoPoint){
-					utility.deferredGetAddress(geoPoint).done(function(r){
-						//DEBUG
-						//console.log('Addresses...');
-						//console.log(r);
-						meta.lastLocationSearch = r;
-						// add results to the UI
-						_.each(r.results, function(e,i,l){
-							// e = individual object
-							// i = array index ##
-							// l = passed array
-							e.sequence = i;
-							var t = _.template( $('#tpl_modal-addLocation_data-item').html() );
-							$('modal#addLocation results').append( t(e) );
-							views.modals.addLocation.remListE().done(views.modals.addLocation.addListE);
-						});
-						r.results[0].address_components
-					});
-				});
-			},
-			loadDataIntoForm : function(dO){
-				//DEBUG
-				//console.log(dataObject);
-				var address = "";
-				var name = $('modal#addLocation #txt_name').val();
-				// clear the form
-				$('modal#addLocation #frm_details')[0].reset();
-				$('modal#addLocation #txt_name').val(name);
-				$('modal#addLocation #txt_lat').val(dO.geometry.location.lat);
-				$('modal#addLocation #txt_lng').val(dO.geometry.location.lng);
-				$.each(dO.address_components, function(i,v){
-					$.each(v.types,function(j,w){
-						if(w == "locality"){
-							$('modal#addLocation #txt_city').val(dO.address_components[i].long_name);
-						}
-						if( w == "street_number"){
-							address = dO.address_components[i].long_name;
-						}
-						if( w == "route"){
-							address += " " + dO.address_components[i].long_name;
-							$('modal#addLocation #txt_address1').val(address);
-						}
-						if( w == "administrative_area_level_1"){
-							$('modal#addLocation #txt_region').val(dO.address_components[i].long_name);
-						}
-						if( w == "country"){
-							$('modal#addLocation #txt_country').val(dO.address_components[i].short_name);
-						}
-						if( w == "postal_code" || w == "zip_code" ){
-							$('modal#addLocation #txt_code').val(dO.address_components[i].short_name);
-						}
-					});
-				});
-			},
-			setData : function(){
-				meta.tempLocation.set('createdBy', Parse.User.current() );
-				meta.tempLocation.set('Name', name);
-				/*if ( ($('modal#addLocation #txt_lat').val()=="") || ($('modal#addLocation #txt_lng').val()=="") ) {
-				}*/
-				var geo = new Parse.GeoPoint({
-					latitude: parseFloat($('modal#addLocation #txt_lat').val()),
-					longitude: parseFloat($('modal#addLocation #txt_lng').val())
-				});
-				meta.tempLocation.set('Geo', geo);
-				meta.tempLocation.set('City', $('modal#addLocation #txt_city').val() );
-				meta.tempLocation.set('Address1', $('modal#addLocation #txt_address1').val() );
-				meta.tempLocation.set('Region', $('modal#addLocation #txt_region').val() );
-				meta.tempLocation.set('Country', $('modal#addLocation #txt_country').val() );
-				meta.tempLocation.set('Code', $('modal#addLocation #txt_code').val() );
-				meta.tempLocation.save({
-					success: function(d){
-						console.log(d);
-					},
-					error: function(d,e){
-						console.error(e);
-						alert(e.message);
-					}
-				});
-				meta.tempLocation = null;
-				$('modal#addLocation #frm_details')[0].reset();
-				$('input, select, textarea, button').blur();
-				$('modal#addLocation results').html('');
-				views.modals.addLocation.hide();
-			},
-			remE : function(){
-				$('modal#addLocation #btn_cancel').hammer().off('tap');
-				$('modal#addLocation #btn_save').hammer().off('tap');
-				$('modal#addLocation tabs tab').hammer().off('tap');
-				$('modal#addLocation form#frm_details #txt_address1, modal#addLocation form#frm_details #txt_city').off('keyup');
-				$('modal#addLocation form#frm_details').off('submit');
-			},
-			addE : function(){
-				$('modal#addLocation #btn_cancel').hammer().on('tap', function(){
-					views.modals.addLocation.hide();
-				});
-				$('modal#addLocation #btn_save').hammer().on('tap', function(){
-					$.when( views.modals.addLocation.setData() ).done( function(){
-						views.screens.start.getData(true);
-						views.modals.addLocation.hide();
-					} );
-				});
-				$('modal#addLocation tabs tab').hammer().on('tap', function(){
-					$('modal#addLocation tabs tab').removeClass('active');
-					$(this).addClass('active');
-					$('modal#addLocation tabgroup').addClass('hidden');
-					$('modal#addLocation tabgroup#'+$('modal#addLocation tab.active').attr('for') ).removeClass('hidden');
-				});
-				$('modal#addLocation form#frm_details #txt_address1, modal#addLocation form#frm_details #txt_city').on('keyup', function(e){
-					//DEBUG
-					//	console.log('KEY PRESSED!');
-
-					meta.lastKeypressAt = new Date();
-					var string = $('modal#addLocation #txt_address1').val() + ',' + $('modal#addLocation #txt_city').val();
-					
-					// immediately invoke the timer to run after 2 sec
-					setTimeout(function(){
-						//DEBUG
-						//console.log('KEY PRESSED! Timeout Function');
-						if ( (new Date() - meta.lastKeypressAt) >= 2000 ) {
-							//DEBUG
-							//console.log('Normally, I\'d be doing something here');
-							utility.delayGeolocate(string).done(function(r){
-								//DEBUG
-								console.log(string);
-								console.log(r);
-								meta.lastLocationSearch = r;
-								// add results to the UI
-								$('modal#addLocation results').html('');
-								_.each(r.results, function(e,i,l){
-									// e = individual object
-									// i = array index ##
-									// l = passed array
-									e.sequence = i;
-									var t = _.template( $('#tpl_modal-addLocation_data-item').html() );
-									$('modal#addLocation results').append( t(e) );
-									views.modals.addLocation.remListE().done(views.modals.addLocation.addListE);
-								});
-							}).fail(function(e){
-								//DEBUG
-								console.error(e);
-							});
-						}
-					},2000);
-					
-					//$('input, select, textarea, button').blur();
-				});
-				$('modal#addLocation form#frm_details').on('submit', function(e){
-					var string = $('modal#addLocation #txt_address1').val() + ',' + $('modal#addLocation #txt_city').val();
-					var loc = utility.geolocate(string);
-					//DEBUG
-					console.log(string);
-					console.log(loc);
-					$('input, select, textarea, button').blur();
-					e.preventDefault();
-				});
 			},
 			remListE : function(){
 				return $.Deferred(function(f){
-					$('modal#addLocation form results item').hammer().off('tap');
+					//remove events
+					console.log('Removing list events for Start Screen');
+					$('screen#start content list item').hammer().off('tap');
 					f.resolve();
 				});
 			},
 			addListE : function(){
 				return $.Deferred(function(f){
-					$('modal#addLocation form results item').hammer().on('tap',function(){
-						$('modal#addLocation form results item').removeClass('selected');
-						$(this).addClass('selected');
-						var i = parseInt($(this).data('id'));
-						console.log(i);
-						views.modals.addLocation.loadDataIntoForm( meta.lastLocationSearch.results[i] );
+					//add events
+					console.log('Adding list events for Start Screen');
+					$('screen#start content list item').hammer().on('tap',function(){
+						$(this).addClass('active');
+						views.modals.eventDetail.show($(this).data('id'));
 					});
+					f.resolve();
+				});
+			}
+		}
+	},
+	modals : {
+		eventDetail : {
+			initialize : function(){
+				$.when( views.modals.eventDetail.remE() ).done( views.modals.eventDetail.addE() );
+			},
+			show : function(eventID){
+				//UI iniitalize
+				
+				if (typeof eventID != "undefined") {
+					$.when( views.modals.eventDetail.getData(eventID) ).done( views.modals.eventDetail.initialize() );
+
+					$('screen').not('.hidden').addClass('fadeAway');
+					//$('modal#eventDetail top #btn_save').addClass('disabled');
+					$('modal#eventDetail').removeClass('viewportBottom');
+				} else {
+					console.error('You must specify an eventID when loading modal#eventDetail');
+				}
+			},
+			getData : function(eventID){
+				return $.Deferred(function(f){
+					//get some kind of data here
+					var Event = Parse.Object.extend('Event');
+					var qEvent = new Parse.Query(Event);
+					qEvent.get(eventID,{
+						success: function(event){
+							meta.lastEvent = event;
+							//got the event
+							var lat = event.get('eventGeo').latitude;
+							var lng = event.get('eventGeo').longitude;
+							$('modal#eventDetail event name').html(event.get('name'));
+							$('modal#eventDetail event date fromnow').html(moment(event.get('eventAt')).fromNow());
+							$('modal#eventDetail event date fulldate').html(utility.formatDate(event.get('eventAt')));
+							$('modal#eventDetail top').css('background-image','url(http://maps.googleapis.com/maps/api/staticmap?center='+lat+','+lng+'&zoom=15&format=png&sensor=false&size=640x480&maptype=roadmap&style=element:labels.icon|visibility:off&style=feature:administrative.country|element:labels|visibility:off&style=feature:administrative.province|element:labels|visibility:off&style=feature:road|visibility:simplified&style=feature:road.local|element:labels|visibility:off&style=feature:road.arterial|element:labels.icon|visibility:off&style=feature:water|visibility:simplified&style=feature:landscape|visibility:simplified&style=feature:poi|visibility:simplified&style=element:labels|visibility:off&style=feature:transit|element:geometry|visibility:off&style=feature:road)');
+							
+							//retrieve messages for this event
+								views.modals.eventDetail.getMessages(event, true);
+							//retrieve Attendees for this event
+								views.modals.eventDetail.getAttendance(event, true);
+							
+						},
+						error: function(object, error){
+							console.error(error);
+							f.reject(error);
+						}
+					});
+				});
+			},
+			getMessages : function(event, forceDataUpdate){
+				return $.Deferred(function(f){
+					//indicate messages are coming
+					$('modal#eventDetail content').html('Loading messages...');
+					if (typeof forceDataUpdate == "undefined") { forceDataUpdate = false };
+					if (meta.lastEventMessagesTimestamp <= new Date().subMinutes(2) || forceDataUpdate) {
+						//cached messages are too old, so get new ones & render
+						var Message = Parse.Object.extend('Message');
+						var messages = new Parse.Query(Message);
+						messages.equalTo('event', event);
+						messages.notEqualTo('flagged', true);
+						messages.include('user');
+						messages.ascending('createdAt');
+						messages.find({
+							success: function(results){
+								meta.lastEventMessages = results;
+								meta.lastEventMessagesTimestamp = new Date();
+								//clear the messages list
+								$('modal#eventDetail content').html('');
+								if (results.length == 0) {
+									$('modal#eventDetail content').html('No messages in this Event yet.');
+								} else {
+									views.modals.eventDetail.renderMessages(results).done(function(){
+										$('modal#eventDetail content').scrollTop($('modal#eventDetail content message:last-child').offset().top);
+									});
+								}
+								f.resolve();
+							},
+							error: function(error){
+								console.error(error)
+								f.reject(error);
+							}
+						});
+					} else {
+						//cached messages are still fresh, so render
+						views.modals.eventDetail.renderMessages(meta.lastEventMessages).done(function(){
+							$('modal#eventDetail content').scrollTop($('modal#eventDetail content message:last-child').offset().top);
+						});
+						f.resolve();
+					}
+				});
+			},
+			renderMessages : function(messageArray){
+				return $.Deferred(function(f){
+					$('modal#eventDetail content').html('');
+					var t = _.template( $('#tpl_eventMessage').html() );
+					_.each(messageArray,function(o,i,a){
+						// o = individual object
+						// i = array index ##
+						// a = full array
+						//DEBUG
+						console.log(o);
+						var msg = {};
+						msg.id = o.id;
+						msg.userName = o.get('user').get('firstname');
+						msg.text = o.get('text');
+						msg.date = moment(o.createdAt).fromNow();
+						$('modal#eventDetail content').append( t(msg) );
+					});
+					f.resolve();
+				});
+			},
+			getAttendance : function(event, forceDataUpdate){
+				return $.Deferred(function(f){
+					if (typeof forceDataUpdate == "undefined") { forceDataUpdate = false };
+					if (meta.lastEventAttendanceTimestamp <= new Date().subMinutes(5) || forceDataUpdate) {
+						var Attendance = Parse.Object.extend('Attendance');
+						var attendees = new Parse.Query(Attendance);
+						attendees.equalTo('event', event);
+						attendees.equalTo('status', 1); //status 1=going
+						attendees.include('user');
+						attendees.find({
+							success: function(data){
+								meta.lastEventAttendance = data;
+								meta.lastEventAttendanceTimestamp = new Date();
+								$('modal#eventDetail top #btn_attendees label').html(''+data.length+'');
+								//check if the current user is attending this event
+								_.each(data,function(o,i,a){
+									if ( o.get('user').id == Parse.User.current().id ) {
+										meta.lastEventUserAttending = true;
+									}
+								});
+								if (meta.lastEventUserAttending) {
+									$('modal#eventDetail #frm_eventMessage').removeClass('hidden');
+									$('modal#eventDetail #btn_attendEvent').addClass('hidden');
+								} else {
+									$('modal#eventDetail #frm_eventMessage').addClass('hidden');
+									$('modal#eventDetail #btn_attendEvent').removeClass('hidden');
+								}
+								f.resolve();
+							},
+							error: function(error){
+								navigator.notification.alert(
+									"Could not retrieve list of Attendees. Go back and try to load this event again.", 
+									function(){
+										console.log('Closed attendee fail alert');
+									},
+									"Oops!",
+									"OK"
+								);
+								console.log(error);
+								f.reject(error);
+							}
+						});
+					}
+				});
+			},
+			hide : function(){
+				views.modals.eventDetail.remE();
+				$('modal#eventDetail').addClass('viewportBottom');
+				$('screen').not('.hidden').removeClass('fadeAway');
+				setTimeout(function(){
+					//remove the Active class from the list item tapped
+					$('screen list item').removeClass('active');
+					$('modal#eventDetail #frm_eventMessage').addClass('hidden');
+					$('modal#eventDetail #btn_attendEvent').addClass('hidden');
+					$('modal#eventDetail top').css('background-image','none');
+					$('modal#eventDetail event name, modal#eventDetail event date fromnow, modal#eventDetail event date fulldate').html('');
+					$('modal#eventDetail content').html('');
+				},500);
+			},
+			remE : function(){
+				$('modal#eventDetail #btn_back').hammer().off('tap');
+				$('modal#eventDetail #btn_location').hammer().off('tap');
+				$('modal#eventDetail #btn_attendance').hammer().off('tap');
+			},
+			addE : function(){
+				$('modal#eventDetail #btn_back').hammer().on('tap', function(){
+					views.modals.eventDetail.hide();
+				});
+				$('modal#eventDetail #btn_location').hammer().on('tap', function(){
+					alert('Location tapped - launch actionsheet here');
+				});
+				$('modal#eventDetail #btn_attendance').hammer().on('tap', function(){
+					alert('Attendance count tapped - launch attendee list here');
+				});
+				$('modal#eventDetail #frm_eventMessage').on('submit', function(e){
+					if (meta.lastEventMessageAt >= new Date().subSeconds(1.5)) {
+						console.log('Prevented message spam');
+					} else {
+						//update when the last message was to prevent spamming events with messages
+						meta.lastEventMessageAt = new Date();
+						//save the message to Parse
+						var Message = Parse.Object.extend('Message');
+						var msg = new Message();
+						msg.set('text', $('modal#eventDetail #frm_eventMessage #txt_text').val());
+						msg.set('user', Parse.User.current());
+						msg.set('event', meta.lastEvent);
+						msg.save(null, {
+							success: function(message){
+								meta.lastEventMessages.push(message);
+								views.modals.eventDetail.getMessages(meta.lastEvent, false);
+								$('modal#eventDetail #frm_eventMessage')[0].reset();
+								$('modal#eventDetail #frm_eventMessage #btn_sendMessage').prop('disabled', true);
+								setTimeout(function(){
+									$('modal#eventDetail #frm_eventMessage #btn_sendMessage').prop('disabled', false);
+								},1500);
+							},
+							error: function(error){
+								navigator.notification.alert(
+									"Could not send your message.  Not sure why, but we're looking at it.", 
+									null, 
+									"Oops!",
+									"OK"
+								);
+								console.log(error);
+							}
+						});
+					}
+					e.preventDefault();
+				});
+			},
+			remListE : function(){
+				return $.Deferred(function(f){
+					//remove some events here
+					f.resolve();
+				});
+			},
+			addListE : function(){
+				return $.Deferred(function(f){
+					//add some events here
 					f.resolve();
 				});
 			}
@@ -615,6 +723,9 @@ var menu = {
 };
 
 var utility = {
+	formatDate : function(dateObject){
+		return moment(dateObject).format("MMM Do, h:mm A");
+	},
 	dateDiff : function(date1, date2){
 		if (!date2) {
 			// if no date2, assume to check difference to now

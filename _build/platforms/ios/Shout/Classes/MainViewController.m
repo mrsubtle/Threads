@@ -103,8 +103,8 @@
 
 - (void)webViewDidFinishLoad:(UIWebView*)theWebView
 {
-    // Black base color for background matches the native apps
-    theWebView.backgroundColor = [UIColor blackColor];
+    // White base color override
+    theWebView.backgroundColor = [UIColor whiteColor];
 
     return [super webViewDidFinishLoad:theWebView];
 }

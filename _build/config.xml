@@ -68,6 +68,8 @@
         phonegap plugin add cordova-plugin-geolocation
         phonegap plugin add cordova-plugin-network-information
         phonegap plugin add cordova-plugin-vibration
+        phonegap plugin add https://github.com/oauth-io/oauth-phonegap
+         ->phonegap plugin add cordova-plugin-inappbrowser
     -->
 
     <gap:plugin name="org.apache.cordova.battery-status" />

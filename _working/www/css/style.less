@@ -29,6 +29,7 @@
 	//@appBGsolid: rgb(248,243,231); //F8F3E7
 	@appBGsolid: #fff;
 	@mainColor: #373737;
+	@screenBG: @appBGsolid;
 	@cardBG: #fff;
 	@modalBG: #fafafa;
 	@tint: #6FCDEB;
@@ -113,7 +114,7 @@
 		height:100%; width:100%;
 		margin:0px; padding:0px;
 		color: @mainColor;
-		background-color: #000;
+		background-color: @appBGsolid;
 	}
 
 	app {
@@ -194,8 +195,8 @@
 		display: block;
 		width: 100%;
 		height: 100%;
-		background-color:#ffffff;
-		background-image: -webkit-radial-gradient(50% 40%, circle cover, #ffffff, @appBGsolid 100%);
+		background-color: @screenBG;
+		background-image: -webkit-radial-gradient(50% 40%, circle cover, #ffffff, @screenBG 100%);
 		-webkit-transform-origin: 100% 60%;
 		//-webkit-filter: brightness(1);
 		middle {
@@ -225,67 +226,55 @@
 			overflow-y: auto;
 			-webkit-overflow-scrolling: touch;
 			text-align: center;
-			card {
-				display: inline-block;
+			group {
+				display: block;
+				margin: 0rem;
+				padding: 0rem;
+				border: none;
+				groupHeader {
+					display: block;
+					margin: 2rem 0rem 0rem 0rem;
+					padding: 2rem;
+					border: none;
+					text-align: center;
+					font-weight: 400;
+					font-size: 1.3rem;
+					text-transform: uppercase;
+					letter-spacing: 0.3rem;
+					opacity: 0.67;
+				}
+			}
+			item {
+				display: block;
 				position: relative;
-				margin: 1em;
-				//background-color: @cardBG;
-				background-color: #eee;
-				box-shadow: 0px 3px 9px 0px rgba(90,90,90,0.37);
-				height: 40%;
-				min-height: 30rem;
+				height: 5rem;
 				width: 100%;
-				max-width: 40rem;
-				directions {
-					display: inline-block;
-					position: absolute;
-					top:0; right:0;
-					width: @touchBase;
-					height: @touchBase;
-					line-height: @touchBase;
-					text-align: center;
-				}
-				/*directions:after {
-					position: absolute;
-					top: 0; left: 0;
-					font-family: @iconFamily;
-					font-size: 2.5em;
-					content: "\e82c";
-					width: @touchBase;
-					height: @touchBase;
-					line-height: @touchBase;
-					text-align: center;
-					color: #fff;
-					text-shadow: 0px 1px 5px rgba(0,0,0,0.17);
-				}*/
-				label {
+				border-bottom: 0.1rem solid darken(@screenBG,3%);
+				name {
 					display: block;
 					position: absolute;
-					width: 100%;
-					padding: 2em;
-					bottom: 2em; left: 0;
-					background-color: rgba(255,255,255,0.57);
-					text-align: left;
-				}
-				address {
-					font-size: 2.3em;
+					left: 1.5rem;
+					top: 1rem;
+					right: 9rem;
+					line-height: 3rem;
 					font-weight: 500;
-					display: block;
-					font-style: normal;
+					font-size: 1.5rem;
+					text-align: left;
+					color: @tint;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
 				}
-				distance {
-					//font-family: @ueFamily;
-					font-size: 1.47em;
-					font-weight: 600;
-					color: lighten(@mainColor,45%);
+				date {
 					display: block;
-				}
-				distance:before {
-					font-family: @iconFamily;
-					font-weight: normal;
-					content: "\e818  ";
-					display: inline;
-					color: lighten(@tint,15%);
+					position: absolute;
+					right: 1.5rem;
+					top: 1rem;
+					line-height: 3rem;
+					font-weight: 400;
+					font-size: 1.5rem;
+					text-align: right;
+					opacity: 0.67;
 				}
 			}
 		}
@@ -316,7 +305,7 @@
 			width: 100%;
 			height: (@touchBase * 1.5);
 			color: #fff;
-			background-color: @tint;
+			background-color: lighten(@tint, 40%);
 			//flexbox definition
 			display: -webkit-flex;
 			-webkit-box-direction: normal;
@@ -350,10 +339,19 @@
 			position: absolute;
 			top: (@touchBase * 1.5); left: 0; bottom: 0; right: 0;
 			background-color: @modalBG;
-			padding: 1em;
+			padding: 1rem;
 			overflow-x: hidden;
 			overflow-y: auto;
 			-webkit-overflow-scrolling: touch;
+		}
+		&.panel {
+			top {
+				height: (@touchBase * 4);
+				display: block;
+			}
+			content {
+				top: (@touchBase * 4);
+			}
 		}
 	}
 
@@ -404,15 +402,34 @@
 	}
 
 // UI ELEMENTS
-
+	i.icon, i.iconText, i.iconNumber {
+		overflow: hidden;
+		label {
+			color: @tint;
+		}
+	}
+	i.icon {
+		min-height: @touchBase;
+		display: inline-block;
+		width: @touchBase;
+		padding: 0px; margin: 0px;
+		img {
+			vertical-align: middle;
+			height: @touchBase;
+			width: auto;
+			padding: 0px; margin: 0px;
+		}
+	}
 	i.iconText {
 		min-height: @touchBase;
 		display: inline-block;
+		padding: 0px; margin: 0px;
 		//width: 100%;
 		img {
 			vertical-align: middle;
 			height: @touchBase;
 			width: auto;
+			padding: 0px; margin: 0px;
 		}
 		label {
 			text-transform: uppercase;
@@ -423,7 +440,23 @@
 			line-height: (@touchBase);
 			letter-spacing: 0.1em;
 			display: inline-block;
-			padding-right: 1em;
+		}
+	}
+	i.iconNumber {
+		min-height: @touchBase;
+		display: inline-block;
+		width: @touchBase;
+		label {
+			text-transform: uppercase;
+			font-size: 2.5rem;
+			font-style: normal;
+			font-weight: 500;
+			font-family: @uiFamily;
+			line-height: (@touchBase);
+			letter-spacing: 0.1em;
+			display: inline-block;
+			width: 100%;
+			text-align: center;
 		}
 	}
 
@@ -527,7 +560,7 @@
 	}
 	button.primary {
 		border: none;
-		border-radius: 0.5em;
+		border-radius: 0.5rem;
 		color: @appBGsolid;
 		background-color: @tint;
 		width: 100%;
@@ -644,14 +677,6 @@
 			}
 		}
 		content {
-			padding-left: 1rem;
-			padding-right: 1rem;
-			card {
-				margin: 1rem 0rem 0rem 0rem;
-			}
-			card:last-child {
-				margin-bottom: 1rem;
-			}
 		}
 	}
 
@@ -718,6 +743,121 @@
 		}
 		#txt_name {
 			font-weight: 700;
+		}
+	}
+	modal#eventDetail {
+		top {
+			//background-image: url('http://maps.googleapis.com/maps/api/staticmap?center=49.891585,-97.143857&zoom=15&format=png&sensor=false&size=640x480&maptype=roadmap&style=element:labels.icon|visibility:off&style=feature:administrative.country|element:labels|visibility:off&style=feature:administrative.province|element:labels|visibility:off&style=feature:road|visibility:simplified&style=feature:road.local|element:labels|visibility:off&style=feature:road.arterial|element:labels.icon|visibility:off&style=feature:water|visibility:simplified&style=feature:landscape|visibility:simplified&style=feature:poi|visibility:simplified&style=element:labels|visibility:off&style=feature:transit|element:geometry|visibility:off&style=feature:road');
+			background-size: 110%;
+			background-position: center center;
+			background-repeat: no-repeat;
+			color: @mainColor;
+			navbar {
+				display: block;
+				position: relative;
+				width: 100%;
+				height: @touchBase;
+				margin: 0rem;
+				padding: 0rem;
+				border: none;
+				left, right {
+					display: inline-block;
+					position: absolute;
+					top: 0rem;
+					height: @touchBase;
+				}
+				left {
+					left: 0rem;
+					text-align: left;
+				}
+				right {
+					right: 0rem;
+					text-align: right;
+				}
+			}
+			event {
+				display: block;
+				position: absolute;
+				bottom: 0rem;
+				padding: 1rem;
+				date {
+					opacity: 0.67;
+					display: block;
+					fromnow {
+						font-size: 1.7rem;
+					}
+					fulldate {
+						margin-left: 0.5rem;
+						font-size: 1.3rem;
+					}
+				}
+				name {
+					font-size: 2.5rem;
+					font-weight: 400;
+					display: block;
+				}
+			}
+		}
+		content {
+			padding-bottom: (@touchBase);
+			message {
+				display: block;
+				background-color: darken(@modalBG, 3%);
+				border-radius: 0rem 1rem 1rem 1rem;
+				padding: 1rem;
+				margin-bottom: 1rem;
+				detail {
+					display: block;
+					padding-bottom: 0.5rem;
+					user {
+						font-weight: 500;
+					}
+					date {
+						opacity: 0.67;
+					}
+				}
+				text {
+					display: block;
+					font-size: 1.3rem;
+				}
+			}
+		}
+		form#frm_eventMessage {
+			display: block;
+			position: absolute;
+			bottom: 0rem; left: 0rem;
+			width: 100%; height: (@touchBase / 1.2);
+			padding: 0rem;
+			margin: 0rem;
+			border: none;
+			border-top: 0.1rem solid darken(@modalBG, 3%);
+			background-color: @modalBG;
+			input {
+				display: inline-block;
+				position: absolute;
+				-webkit-appearance: none;
+				padding: 0rem 0rem 0rem 1rem;
+				margin: 0rem;
+				border: none;
+				height: (@touchBase / 1.2);
+				top: 0rem; left: 0rem;
+				right: 6rem;
+				font-size: 1.5rem;
+				font-family: @uiFamily;
+				background-color: transparent;
+			}
+			button {
+				display: inline-block;
+				position: absolute;
+				-webkit-appearance: none;
+				padding: 0rem;
+				margin: 0rem;
+				border: none;
+				height: (@touchBase / 1.2); width: 6rem;
+				top: 0rem; right: 0rem;
+				text-align: center;
+				background-color: transparent;
+			}
 		}
 	}
 

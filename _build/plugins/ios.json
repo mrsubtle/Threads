@@ -22,7 +22,7 @@
                     "CoreGraphics.framework": [
                         {
                             "xml": false,
-                            "count": 2
+                            "count": 3
                         }
                     ],
                     "AssetsLibrary.framework": [
@@ -54,7 +54,9 @@
                             "xml": true,
                             "count": 1
                         }
-                    ]
+                    ],
+                    "Twitter.framework": [],
+                    "Accounts.framework": []
                 }
             },
             "config.xml": {
@@ -91,8 +93,17 @@
                         {
                             "xml": "<feature name=\"Vibration\"><param name=\"ios-package\" value=\"CDVVibration\" /></feature>",
                             "count": 1
+                        },
+                        {
+                            "xml": "<feature name=\"InAppBrowser\"><param name=\"ios-package\" value=\"CDVInAppBrowser\" /></feature>",
+                            "count": 1
+                        },
+                        {
+                            "xml": "<access origin=\"https://oauth.io\" />",
+                            "count": 1
                         }
-                    ]
+                    ],
+                    "/widget/plugins": []
                 }
             },
             "*-Info.plist": {
@@ -128,7 +139,14 @@
         },
         "cordova-plugin-vibration": {
             "PACKAGE_NAME": "com.n2d.Shout"
+        },
+        "com.oauthio.plugins.oauthio": {
+            "PACKAGE_NAME": "com.n2d.Shout"
         }
     },
-    "dependent_plugins": {}
+    "dependent_plugins": {
+        "org.apache.cordova.inappbrowser": {
+            "PACKAGE_NAME": "com.n2d.Shout"
+        }
+    }
 }

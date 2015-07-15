@@ -20,17 +20,23 @@
                         <fontDescription key="fontDescription" type="system" pointSize="11"/>
                     </variation>
                 </label>
-                <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="launch.png" translatesAutoresizingMaskIntoConstraints="NO" id="IUa-Yq-OKV">
-                    <rect key="frame" x="163" y="199" width="155" height="82"/>
+                <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" placeholderIntrinsicWidth="155" placeholderIntrinsicHeight="127" image="icon512.png" translatesAutoresizingMaskIntoConstraints="NO" id="IUa-Yq-OKV">
+                    <rect key="frame" x="163" y="176" width="155" height="127"/>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    <rect key="contentStretch" x="0.0" y="0.0" width="0.0" height="0.0"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="155" id="jZp-kj-gZO"/>
+                        <constraint firstAttribute="height" constant="127" id="nWe-BB-MfY"/>
+                    </constraints>
                 </imageView>
             </subviews>
             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
             <constraints>
                 <constraint firstAttribute="bottom" secondItem="8ie-xW-0ye" secondAttribute="bottom" constant="20" id="Kzo-t9-V3l"/>
                 <constraint firstItem="8ie-xW-0ye" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="20" symbolic="YES" id="MfP-vx-nX0"/>
+                <constraint firstAttribute="centerX" secondItem="IUa-Yq-OKV" secondAttribute="centerX" id="YPk-3z-jNy"/>
                 <constraint firstAttribute="centerX" secondItem="8ie-xW-0ye" secondAttribute="centerX" id="ZEH-qu-HZ9"/>
-                <constraint firstAttribute="centerY" secondItem="IUa-Yq-OKV" secondAttribute="centerY" id="nvL-m9-c5q"/>
-                <constraint firstAttribute="centerX" secondItem="IUa-Yq-OKV" secondAttribute="centerX" id="ram-il-Rse"/>
+                <constraint firstAttribute="centerY" secondItem="IUa-Yq-OKV" secondAttribute="centerY" id="dsV-r6-8m1"/>
             </constraints>
             <nil key="simulatedStatusBarMetrics"/>
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
@@ -38,6 +44,6 @@
         </view>
     </objects>
     <resources>
-        <image name="launch.png" width="165" height="79"/>
+        <image name="icon512.png" width="512" height="512"/>
     </resources>
 </document>

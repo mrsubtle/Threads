@@ -20,8 +20,8 @@
 //  main.m
 //  Shout
 //
-//  Created by ___FULLUSERNAME___ on ___DATE___.
-//  Copyright ___ORGANIZATIONNAME___ ___YEAR___. All rights reserved.
+//  Created by Richard Bennett on July 12, 2015.
+//  Copyright Black Digital Agency, Inc. 2015. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
