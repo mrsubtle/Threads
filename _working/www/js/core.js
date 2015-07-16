@@ -177,7 +177,7 @@ var views = {
 		// check if there is an active session
 		if ( Parse.User.current() ) {
 			// init all the in-app views
-			//views.modals.addLocation.initialize();
+
 			// show the default view
 			views.screens.start.initialize();
 		} else {
@@ -216,7 +216,7 @@ var views = {
 							//YAY, now do stuff
 							console.log('Parse.User.logIn Success');
 							console.log(user);
-							views.screens.start.initialize();
+							views.initialize();
 							setTimeout(function(){
 								$('screen#login #btn_login').prop('disabled',false);
 								$('screen#login #frm_login')[0].reset();
@@ -296,7 +296,7 @@ var views = {
 							//YAY, now do stuff
 							console.log('Parse.User.signUp Success');
 							//console.log(user);
-							views.screens.start.initialize();
+							views.initialize();
 						},
 						error : function(user, error){
 							//Boo, shit failed
@@ -319,68 +319,119 @@ var views = {
 		},
 		start : {
 			initialize : function(){
-				views.screens.start.render();
-				views.screens.start.getData();
+
+				//set the user's location in Parse
+				utility.deferredGetLocation(false,true).done(
+					//now that we have the locaiton, get data
+					views.screens.start.getData(true).done(
+						//now that we have data, render the screen
+				 		views.screens.start.render
+				 	)
+				);
+
 			},
 			getData : function(forceDataUpdate){
-				$('screen#start #btn_refreshData').addClass('disabled');
-				$('screen#start #btn_refreshData').addClass('infiniteSpin');
-				if (forceDataUpdate || meta.userAttendanceLastRetrieved <= new Date().subMinutes(5) || meta.userEventsNearbyLastRetrieved <= new Date().subMinutes(15)) { 
-					//force the data update
-					//get #nextEvents attendance data
-						//Indicate loading
-						$('screen#start content #nextEvents list').html('Loading data...');
-						// load event template
-						var t = _.template( $('#tpl_eventListItem').html() );
+				return $.Deferred(function(df){
+					var errors = [];
+					var successes = [];
+					$('screen#start #btn_refreshData').addClass('disabled');
+					$('screen#start #btn_refreshData').addClass('infiniteSpin');
+					if (forceDataUpdate || meta.userAttendanceLastRetrieved <= new Date().subMinutes(5) || meta.userEventsNearbyLastRetrieved <= new Date().subMinutes(15)) { 
+						//force the data update
+						//get #nextEvents attendance data
+							//Indicate loading
+							$('screen#start content #nextEvents list').html('Loading data...');
+							$('screen#start content #nearbyEvents list').html('Loading data...');
+							// load event template
+							var t = _.template( $('#tpl_eventListItem').html() );
 
-						//retrieve data from Parse
-						var Event = Parse.Object.extend("Event");
-						var Attendance = Parse.Object.extend("Attendance");
+							//retrieve data from Parse
+							var Event = Parse.Object.extend("Event");
+							var Attendance = Parse.Object.extend("Attendance");
 
-						//define Attendance object query
-						var attendanceQuery = new Parse.Query(Attendance);
-						attendanceQuery.equalTo('user', Parse.User.current());
-						attendanceQuery.equalTo('status', 1); // status 1=accept 2=maybe 3=decline 0=unknown
-						attendanceQuery.include('event');
-						attendanceQuery.find({
-							success: function(results) {
-								console.log('Successfully retrieved accepted Attendance records for current user');
-								meta.userAttendance = _.sortBy(results, function(i){ return i.get('event').get('eventAt'); });
-								//clear the list
-								$('screen#start content #nextEvents list').html('');
-								_.each(meta.userAttendance,function(o,i,a){
-									// o = individual object
-									// i = array index ##
-									// a = full array
-									// get the event associated with this attendance object
-									var e = o.get('event');
-									if (e.get('eventAt') >= new Date().subHours(2) && e.get('eventAt') <= new Date().addHours(24)){
+							//define Attendance object query
+							var attendanceQuery = new Parse.Query(Attendance);
+							attendanceQuery.equalTo('user', Parse.User.current());
+							attendanceQuery.equalTo('status', 1); // status 1=accept 2=maybe 3=decline 0=unknown
+							attendanceQuery.include('event');
+							attendanceQuery.find({
+								success: function(results) {
+									console.log('Successfully retrieved accepted Attendance records for current user');
+									meta.userAttendance = _.sortBy(results, function(i){ return i.get('event').get('eventAt'); });
+									//clear the list
+									$('screen#start content #nextEvents list').html('');
+									_.each(meta.userAttendance,function(o,i,a){
+										// o = individual object
+										// i = array index ##
+										// a = full array
+										// get the event associated with this attendance object
+										var e = o.get('event');
+										if (e.get('eventAt') >= new Date().subHours(2) && e.get('eventAt') <= new Date().addHours(24)){
+											// build display object
+											var dO = {}
+											dO.id = e.id;
+											dO.name = e.get('name');
+											dO.eventFromNow = moment(e.get('eventAt')).fromNow();
+											$('screen#start content #nextEvents list').append( t(dO) );
+										}
+									});
+									if ($('screen#start content #nextEvents list').children().length == 0) {
+										$('screen#start content #nextEvents list').html('No events coming up in the next two days.<br>Why not create one?');
+									}
+									//add event handlers for generated list items
+									$.when( views.screens.start.remListE() ).done( views.screens.start.addListE() );
+									//remove loading indicators
+									$('screen#start #btn_refreshData').removeClass('disabled');
+									$('screen#start #btn_refreshData').removeClass('infiniteSpin');
+								},
+								error: function(error){
+									console.error(error);
+								}
+							});
+
+							//define Nearby Event query
+							var nearbyEventQuery = new Parse.Query(Event);
+							nearbyEventQuery.equalTo('public', true);
+							nearbyEventQuery.notEqualTo('createdBy', Parse.User.current());
+							nearbyEventQuery.greaterThan('eventAt', new Date().subMinutes(45));
+							nearbyEventQuery.withinKilometers('eventGeo', Parse.User.current().get('Geo'), 200);
+							//nearbyEventQuery.withinKilometers(100.0);
+							nearbyEventQuery.limit(10);
+							nearbyEventQuery.find({
+								success: function(ev){
+									meta.userEventsNearby = _.sortBy(ev, function(i){ return i.get('eventAt'); });
+									console.log('Successfully retrieved nearby Event records for current user');
+									//clear the list
+									$('screen#start content #nearbyEvents list').html('');
+									_.each(meta.userEventsNearby, function(o,i,a){
+										// o = individual object
+										// i = array index ##
+										// a = full array
+
 										// build display object
 										var dO = {}
-										dO.id = e.id;
-										dO.name = e.get('name');
-										dO.eventFromNow = moment(e.get('eventAt')).fromNow();
-										$('screen#start content #nextEvents list').append( t(dO) );
+										dO.id = o.id;
+										dO.name = o.get('name');
+										dO.eventFromNow = moment(o.get('eventAt')).fromNow();
+										$('screen#start content #nearbyEvents list').append( t(dO) );
+										
+									});
+									if ($('screen#start content #nearbyEvents list').children().length == 0) {
+										$('screen#start content #nearbyEvents list').html('No events nearby.<br>Create one now!');
 									}
-								});
-								//add event handlers for generated list items
-								$.when( views.screens.start.remListE() ).done( views.screens.start.addListE() );
-								//remove loading indicators
-								$('screen#start #btn_refreshData').removeClass('disabled');
-								$('screen#start #btn_refreshData').removeClass('infiniteSpin');
-							},
-							error: function(error){
-								console.error(error);
-							}
-						});
-
-						//define Nearby Event query
-						/*
-						var nearbyEventQuery = new Parse.Query(Event);
-						nearbyEventQuery.equalTo('public', true);
-						nearbyEventQuery.include('event');
-						*/
-				}
+									//add event handlers for generated list items
+									$.when( views.screens.start.remListE() ).done( views.screens.start.addListE() );
+									//remove loading indicators
+									$('screen#start #btn_refreshData').removeClass('disabled');
+									$('screen#start #btn_refreshData').removeClass('infiniteSpin');
+								},
+								error: function(error){
+									console.error(error);
+								}
+							});
+					}
+					df.resolve();
+				});
 			},
 			render : function(){
 				$('app screen').addClass('hidden');
@@ -393,8 +444,7 @@ var views = {
 				return $.Deferred(function(f){
 					$('screen#start #btn_toggleMenu').hammer().off('tap');
 					$('screen#start #btn_refreshData').hammer().off('tap');
-					$('screen#start #btn_addLocation').hammer().off('tap');
-					$('screen#start content card').hammer().off('tap');
+					$('screen#start #btn_addEvent').hammer().off('tap');
 					f.resolve();
 				});
 			},
@@ -407,12 +457,8 @@ var views = {
 					$('screen#start #btn_refreshData').hammer().on('tap',function(){
 						views.screens.start.getData(true);
 					});
-					$('screen#start #btn_addLocation').hammer().on('tap',function(){
-						$.when( views.modals.addLocation.initialize() ).done( views.modals.addLocation.show() );
-					});
-					$('screen#start content card').hammer().on('tap',function(){
-						// do something to show the item's details
-						
+					$('screen#start #btn_addEvent').hammer().on('tap',function(){
+						views.modals.addEvent.show();
 					});
 					f.resolve();
 				});
@@ -439,6 +485,78 @@ var views = {
 		}
 	},
 	modals : {
+		addEvent : {
+			initialize : function(){
+				$.when( views.modals.addEvent.remE() ).done( views.modals.addEvent.addE() );
+			},
+			show : function(eventID){
+				//UI iniitalize
+				$('modal#addEvent top #btn_save').addClass('disabled');
+				
+				//Initialize Modal Events
+				views.modals.addEvent.initialize();
+
+				//Show the modal
+				$('screen').not('.hidden').addClass('fadeAway');
+				$('modal#addEvent').removeClass('viewportBottom');
+			},
+			hide : function(){
+				views.modals.addEvent.remE();
+				$('modal#addEvent').addClass('viewportBottom');
+				$('screen').not('.hidden').removeClass('fadeAway');
+			},
+			remE : function(){
+				$('modal#addEvent #btn_back').hammer().off('tap');
+				$('modal#addEvent #btn_location').hammer().off('tap');
+				$('modal#addEvent #btn_attendance').hammer().off('tap');
+			},
+			addE : function(){
+				$('modal#addEvent #btn_back').hammer().on('tap', function(){
+					views.modals.addEvent.hide();
+				});
+				$('modal#addEvent #btn_location').hammer().on('tap', function(){
+					alert('Location tapped - launch actionsheet here');
+				});
+				$('modal#addEvent #btn_attendance').hammer().on('tap', function(){
+					alert('Attendance count tapped - launch attendee list here');
+				});
+				$('modal#addEvent #frm_eventMessage').on('submit', function(e){
+					if (meta.lastEventMessageAt >= new Date().subSeconds(1.5)) {
+						console.log('Prevented message spam');
+					} else {
+						//update when the last message was to prevent spamming events with messages
+						meta.lastEventMessageAt = new Date();
+						//save the message to Parse
+						var Message = Parse.Object.extend('Message');
+						var msg = new Message();
+						msg.set('text', $('modal#eventDetail #frm_eventMessage #txt_text').val());
+						msg.set('user', Parse.User.current());
+						msg.set('event', meta.lastEvent);
+						msg.save(null, {
+							success: function(message){
+								meta.lastEventMessages.push(message);
+								views.modals.eventDetail.getMessages(meta.lastEvent, false);
+								$('modal#eventDetail #frm_eventMessage')[0].reset();
+								$('modal#eventDetail #frm_eventMessage #btn_sendMessage').prop('disabled', true);
+								setTimeout(function(){
+									$('modal#eventDetail #frm_eventMessage #btn_sendMessage').prop('disabled', false);
+								},1500);
+							},
+							error: function(error){
+								navigator.notification.alert(
+									"Could not send your message.  Not sure why, but we're looking at it.", 
+									null, 
+									"Oops!",
+									"OK"
+								);
+								console.log(error);
+							}
+						});
+					}
+					e.preventDefault();
+				});
+			}
+		},
 		eventDetail : {
 			initialize : function(){
 				$.when( views.modals.eventDetail.remE() ).done( views.modals.eventDetail.addE() );
@@ -610,6 +728,8 @@ var views = {
 				$('modal#eventDetail #btn_back').hammer().off('tap');
 				$('modal#eventDetail #btn_location').hammer().off('tap');
 				$('modal#eventDetail #btn_attendance').hammer().off('tap');
+				$('modal#eventDetail #btn_attendEvent').hammer().off('tap');
+				$('modal#eventDetail #frm_eventMessage').off('submit');
 			},
 			addE : function(){
 				$('modal#eventDetail #btn_back').hammer().on('tap', function(){
@@ -620,6 +740,37 @@ var views = {
 				});
 				$('modal#eventDetail #btn_attendance').hammer().on('tap', function(){
 					alert('Attendance count tapped - launch attendee list here');
+				});
+				$('modal#eventDetail #btn_attendEvent').hammer().on('tap', function(){
+					navigator.notification.confirm(
+						"You'll be there " + moment().fromNow(meta.lastEvent.get('eventAt')) + ".", 
+						function(buttonIndex){
+							if (buttonIndex == 1) {
+								var Attendance = Parse.Object.extend('Attendance');
+								var attending = new Attendance();
+								attending.set('user', Parse.User.current());
+								attending.set('event', meta.lastEvent);
+								attending.set('status', 1);
+								attending.save(null,{
+									success: function(attendanceObj){
+										views.screens.start.getData(true);
+										views.modals.eventDetail.show(meta.lastEvent.id);
+									},
+									error: function(error){
+										navigator.notification.alert(
+											"Could not join this event.  Not sure why, but we're looking at it.", 
+											null, 
+											"Oops!",
+											"OK"
+										);
+										console.error(error);
+									}
+								});
+							}
+						}, 
+						meta.lastEvent.get('name'),
+						['You bet!', 'No thanks']
+					);
 				});
 				$('modal#eventDetail #frm_eventMessage').on('submit', function(e){
 					if (meta.lastEventMessageAt >= new Date().subSeconds(1.5)) {

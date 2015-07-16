@@ -7,7 +7,7 @@
     <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
         <g id="nav-back" sketch:type="MSArtboardGroup">
             <rect id="bg" fill-opacity="0" fill="#D8D8D8" sketch:type="MSShapeGroup" x="0" y="0" width="50" height="50"></rect>
-            <path d="M21.9852814,19 L20.4852814,19 L20.4852814,31 L23.4852814,31 L23.4852814,22 L32.4852814,22 L32.4852814,19 L21.9852814,19 Z" id="Back" fill-opacity="0.87" fill="#6FCDEB" sketch:type="MSShapeGroup" transform="translate(26.485281, 25.000000) rotate(-45.000000) translate(-26.485281, -25.000000) "></path>
+            <path d="M21.9852814,19 L20.4852814,19 L20.4852814,31 L23.4852814,31 L23.4852814,22 L32.4852814,22 L32.4852814,19 L21.9852814,19 Z" id="Back" fill="#373737" sketch:type="MSShapeGroup" transform="translate(26.485281, 25.000000) rotate(-45.000000) translate(-26.485281, -25.000000) "></path>
         </g>
     </g>
 </svg>

@@ -396,6 +396,11 @@
 				height: auto;
 			}
 		}
+		i.iconText {
+			label {
+				color: @modalBG !important;
+			}
+		}
 	}
 	menu.menu-left {
 		-webkit-transform: translateX(-100%);
@@ -405,7 +410,7 @@
 	i.icon, i.iconText, i.iconNumber {
 		overflow: hidden;
 		label {
-			color: @tint;
+			color: @mainColor;
 		}
 	}
 	i.icon {
@@ -682,7 +687,7 @@
 
 // MODAL-SPECIFIC
 
-	modal#addLocation {
+	modal#addEvent {
 		content {
 			margin: 0; padding: 0;
 
