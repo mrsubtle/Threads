@@ -86,6 +86,9 @@ var meta = {
 			lat : 49.9362962
 		}
 	],
+	googleMap: {},
+	googleLoc: {},
+	googlePla: {},
 	googleMapsScriptLoaded : false,
 	googlePlacesScriptLoaded : false,
 	userLocation : {},
@@ -132,6 +135,11 @@ var app = {
 		
 		//set Google API Key
 		meta.keys.google.current = meta.keys.google.web;
+
+		//init the maps stuff
+		var meta.googleMap = new google.maps.Map($('#mapHolder'),{});
+		/*var meta.googlePla = new google.maps.places.PlacesService(map);
+		meta.googlePla.nearbySearch({location:loc,radius:1000,keyword:''}, function(d){console.log(d);});*/
 
 		//bind events necessary on mobile
 		app.bindEvents();
@@ -180,6 +188,7 @@ var views = {
 
 			// show the default view
 			views.screens.start.initialize();
+
 		} else {
 			// show the signup or login page
 			views.screens.login.initialize();
@@ -319,16 +328,14 @@ var views = {
 		},
 		start : {
 			initialize : function(){
-
 				//set the user's location in Parse
-				utility.deferredGetLocation(false,true).done(
+				utility.deferredGetLocation(false, false).done(function(){
 					//now that we have the locaiton, get data
-					views.screens.start.getData(true).done(
+					views.screens.start.getData(true).done(function(){
 						//now that we have data, render the screen
-				 		views.screens.start.render
-				 	)
-				);
-
+				 		views.screens.start.render();
+					});
+				});
 			},
 			getData : function(forceDataUpdate){
 				return $.Deferred(function(df){
@@ -499,28 +506,37 @@ var views = {
 				//Show the modal
 				$('screen').not('.hidden').addClass('fadeAway');
 				$('modal#addEvent').removeClass('viewportBottom');
+
+				//show a tab
+				$('modal#addEvent tabgroup#'+$('modal#addEvent tab.active').attr('for') ).removeClass('hidden');
 			},
 			hide : function(){
 				views.modals.addEvent.remE();
+				$('modal#addEvent #frm_newEvent')[0].reset();
+				$('input, textarea, button, select').blur();
 				$('modal#addEvent').addClass('viewportBottom');
 				$('screen').not('.hidden').removeClass('fadeAway');
 			},
 			remE : function(){
-				$('modal#addEvent #btn_back').hammer().off('tap');
-				$('modal#addEvent #btn_location').hammer().off('tap');
-				$('modal#addEvent #btn_attendance').hammer().off('tap');
+				$('modal#addEvent #btn_cancel').hammer().off('tap');
+				$('modal#addEvent #btn_save').hammer().off('tap');
+				$('modal#addEvent tabs tab').hammer().off('tap');
+				$('modal#addEvent #frm_newEvent').off('submit');
 			},
 			addE : function(){
-				$('modal#addEvent #btn_back').hammer().on('tap', function(){
+				$('modal#addEvent #btn_cancel').hammer().on('tap', function(){
 					views.modals.addEvent.hide();
 				});
-				$('modal#addEvent #btn_location').hammer().on('tap', function(){
-					alert('Location tapped - launch actionsheet here');
+				$('modal#addEvent #btn_save').hammer().on('tap', function(){
+					alert('Save tapped');
 				});
-				$('modal#addEvent #btn_attendance').hammer().on('tap', function(){
-					alert('Attendance count tapped - launch attendee list here');
+				$('modal#addEvent tabs tab').hammer().on('tap', function(){
+					$('modal#addEvent tabs tab').removeClass('active');
+					$(this).addClass('active');
+					$('modal#addEvent tabgroup').addClass('hidden');
+					$('modal#addEvent tabgroup#'+$('modal#addEvent tab.active').attr('for') ).removeClass('hidden');
 				});
-				$('modal#addEvent #frm_eventMessage').on('submit', function(e){
+				$('modal#addEvent #frm_newEvent').on('submit', function(e){
 					if (meta.lastEventMessageAt >= new Date().subSeconds(1.5)) {
 						console.log('Prevented message spam');
 					} else {
@@ -930,17 +946,21 @@ var utility = {
 	},
 	reverseGeoCode : function(lat, lng, callback){
 		var uri = 'https://maps.googleapis.com/maps/api/geocode/json?latlng='+lat+','+lng+'&key='+meta.keys.google.current;
-		
-		$.getJSON(uri)
-		.done(function(data){
-			console.log('Got address(es)');
-			meta.lastLocationSearch = data;
-			//console.log(data);
-		})
-		.fail(function(jqXHR,textStatus,error){
-			console.error(error);
-		})
-		.always(callback);
+		return $.Deferred(function(rgcf){
+
+			$.getJSON(uri)
+				.done(function(data){
+					console.log('Got address(es)');
+					meta.lastLocationSearch = data;
+					rgcf.resolve(data);
+				})
+				.fail(function(jqXHR,textStatus,error){
+					console.error(error);
+					rgcf.reject(error);
+				})
+				.always(callback);
+			
+		});
 	},
 	delayGeolocate : function(stringtoLocate){
 		return $.Deferred(function(data){
@@ -1014,6 +1034,7 @@ var utility = {
 								console.error(error);
 							}
 						});
+						meta.googleLoc = new google.maps.LatLng(Parse.User.current().get('Geo').latitude,Parse.User.current().get('Geo').longitude);
 						data.resolve(point);
 					},function(e){
 						// error

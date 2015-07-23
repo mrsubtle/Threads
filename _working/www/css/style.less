@@ -512,7 +512,7 @@
 			-webkit-appearance: none;
 			margin: 0; padding: 0; border: none !important;
 			display: block;
-			input {
+			input, textarea {
 				-webkit-user-select: initial;
 				position: relative;
 				display: block;
@@ -520,7 +520,7 @@
 				margin: 0; border: none;
 				-webkit-appearance: none;
 				padding: (@uiBodySize/1.5);
-				text-align: center;
+				text-align: left;
 				outline: none;
 				background-color: rgba(0,0,0,0);
 				font-family: @ueFamily;
@@ -528,10 +528,20 @@
 				font-weight: 600;
 				color: @mainColor;
 			}
-			input::-webkit-input-placeholder {
+			input::-webkit-input-placeholder, textarea::-webkit-input-placeholder {
 				font-family: @uiFamily;
 				font-size: @uiBodySize;
 				font-weight: 400;
+			}
+			input.haslabel::after {
+				content: attr(data-label);
+				position: absolute;
+				top: 0rem; left: 0rem;
+				font-family: @ueFamily;
+				font-size: @uiBodySize;
+				font-weight: 400;
+				color: @mainColor;
+				opacity: 0.37;
 			}
 		}
 	}
@@ -688,6 +698,9 @@
 // MODAL-SPECIFIC
 
 	modal#addEvent {
+		top {
+			background-color: @tint;
+		}
 		content {
 			margin: 0; padding: 0;
 
@@ -698,51 +711,13 @@
 			fieldset {
 				margin: 2.1rem auto;
 				background-color: @appBGsolid;
-				header {
-					text-transform: uppercase;
-					font-size: 1.5rem;
-					padding: 1.5rem;
+				input#txt_name {
+					font-size: 2.5rem;
+					font-weight: 400;
 				}
-				results {
-					display: inline-block;
-					position: relative;
-					width: 100%;
-					item {
-						display: block;
-						background-color: #fff;
-						font-weight: 500;
-						font-size: 1.7rem;
-						padding: 0 1.5rem;
-						padding-right: @touchBase;
-						margin-bottom: 0.1rem;
-						position: relative;
-						line-height: @touchBase;
-						height: @touchBase;
-						width: 100%;
-						overflow: hidden;
-						color: lighten(@mainColor,37%);
-					}
-					item::last-child {
-						margin: 0;
-					}
-					item::after {
-						display: inline-block;
-						position: absolute;
-						top: 0; right: 0;
-						width: @touchBase; height: @touchBase;
-						line-height: @touchBase;
-						text-align: center;
-						content: "\e82a";
-						font-family: @iconFamily;
-						color: lighten(@tint,37%);
-					}
-					item.selected {
-						color: @mainColor;
-					}
-					item.selected::after {
-						content: "\e82b";
-						color: @tint;
-					}
+				input#txt_name::-webkit-input-placeholder {
+					font-size: 2.5rem;
+					font-weight: 400;
 				}
 			}
 		}
