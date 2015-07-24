@@ -69,10 +69,22 @@
 						</fieldset>
 						<fieldset>
 							<textarea id="txt_tags" placeholder="#tag, #topic, #keyword" autocorrect="off" autocapitalize="off" maxlength="512"></textarea>
+							<field>
+								<input id="chk_public" type="checkbox" value="public" checked="checked">
+								<label for="chk_public">Show in nearby event searches</label>
+							</field>
 						</fieldset>
 						<fieldset>
-							<input id="txt_address" type="text" class="haslabel" data-label="Address" placeholder="1234 Some Way" autocorrect="off" autocapitalize="sentence">
-							<input id="txt_city" type="text" class="haslabel" data-label="City" placeholder="Heresville" autocorrect="on" autocapitalize="sentence">
+							<input id="txt_placesSearch" type="text" class="haslabel" data-label="Address" placeholder="Bob's Beanery, or 1234 Some Way" autocorrect="off" autocapitalize="sentence">
+							<input id="txt_placeLongitude" type="hidden">
+							<input id="txt_placeLatitude" type="hidden">
+							<input id="txt_placeVicinity" type="hidden">
+							<input id="txt_placeName" type="hidden">
+							<places>
+								<error>
+									No results to display.
+								</error>
+							</places>
 						</fieldset>
 					</form>
 				</tabgroup>
@@ -227,6 +239,17 @@
 			<%= formatted_address %>
 		</item>
 	</script>
+	<script id="tpl_placesListItem" type="text/template">
+		<place class="touchable" data-lat="<%= lat %>" data-lon="<%= lon %>">
+			<name>
+				<%= name %>
+			</name>
+			<vicinity>
+				<%= vicinity %>
+			</vicinity>
+		</place>
+	</script>
+	<script id="mapHolder"></script>
 
 	<script src="cordova.js"></script>
 	<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true&libraries=places"></script>

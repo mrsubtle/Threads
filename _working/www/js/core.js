@@ -48,11 +48,15 @@ var meta = {
 			RESTAPIKey : "8vaBSrqmVD0Ie46WW8ttpU37F2YGN3g9KX8dy2k0"
 		}
 	},
+	userP : {
+		searchRadiusInMeters : 1000
+	},
 	userAttendance : [],
 	userAttendanceLastRetrieved : new Date().setFullYear(2000,0,1),
 	userEventsNearby : [],
 	userEventsNearbyLastRetrieved : new Date().setFullYear(2000,0,1),
 	lastEvent : {},
+	lastEventSubmittedAt : new Date().setFullYear(2000,0,1),
 	lastEventMessages : {},
 	lastEventMessagesTimestamp : new Date().setFullYear(2000,0,1),
 	lastEventMessageAt : new Date().setFullYear(2000,0,1),
@@ -89,6 +93,9 @@ var meta = {
 	googleMap: {},
 	googleLoc: {},
 	googlePla: {},
+	googlePlaLastResults: [],
+	googlePlaLastResultsTimestamp: new Date().setFullYear(2000,0,1),
+	googlePlaLastKeyword: '',
 	googleMapsScriptLoaded : false,
 	googlePlacesScriptLoaded : false,
 	userLocation : {},
@@ -110,14 +117,14 @@ var touch = {
 				$('.touched').removeClass('touched');
 			});
 			f.resolve();
-		});
+		}).promise();
 	},
 	remE: function(){
 		return $.Deferred(function(f){
 			$('.touchable').off('mousedown touchstart');
 			$('.touchable').off('mouseup touchend touchcancel');
 			f.resolve();
-		});
+		}).promise();
 	},
 	initialize: function(){
 		touch.remE().done( touch.addE );
@@ -137,9 +144,9 @@ var app = {
 		meta.keys.google.current = meta.keys.google.web;
 
 		//init the maps stuff
-		var meta.googleMap = new google.maps.Map($('#mapHolder'),{});
-		/*var meta.googlePla = new google.maps.places.PlacesService(map);
-		meta.googlePla.nearbySearch({location:loc,radius:1000,keyword:''}, function(d){console.log(d);});*/
+		meta.googleMap = new google.maps.Map( $('#mapHolder'), {} );
+		meta.googlePla = new google.maps.places.PlacesService(meta.googleMap);
+		/*meta.googlePla.nearbySearch({location:loc,radius:1000,keyword:''}, function(d){console.log(d);});*/
 
 		//bind events necessary on mobile
 		app.bindEvents();
@@ -502,6 +509,7 @@ var views = {
 				
 				//Initialize Modal Events
 				views.modals.addEvent.initialize();
+				views.modals.addEvent.renderPlaces();
 
 				//Show the modal
 				$('screen').not('.hidden').addClass('fadeAway');
@@ -509,6 +517,38 @@ var views = {
 
 				//show a tab
 				$('modal#addEvent tabgroup#'+$('modal#addEvent tab.active').attr('for') ).removeClass('hidden');
+			},
+			renderPlaces : function(keyword){
+				if (typeof keyword == "undefined") keyword = '';
+				//set the forceupdate to false, to use cached places if we have them
+				var forceDataUpdate = false;
+				$('modal#addEvent places').html('');
+				utility.deferredGetPlaces(keyword, forceDataUpdate).done(function(d){
+					var t = _.template( $('#tpl_placesListItem').html() );
+					_.each(d,function(o,i,a){
+						//DEBUG
+						//console.log(o);
+						var dO = {
+							name : o.name,
+							lat : o.geometry.location.A,
+							lon : o.geometry.location.F,
+							vicinity : o.vicinity
+						};
+						$('modal#addEvent places').append( t(dO) );
+					});
+					views.modals.addEvent.remListE().done( views.modals.addEvent.addListE );
+				}).fail(function(e){
+					console.error(e.message);
+					$('modal#addEvent places').html('<error>' + e.message + '</error>');
+				});
+			},
+			checkNewEventFormIsValid : function(){
+				if ( $('modal#addEvent #frm_newEvent #txt_name').val().length >= 5 && $('modal#addEvent #frm_newEvent #txt_placesSearch').hasClass('verified') ) {
+					$('modal#addEvent top #btn_save').removeClass('disabled');
+					return true;
+				} else {
+					return false;
+				}
 			},
 			hide : function(){
 				views.modals.addEvent.remE();
@@ -521,6 +561,7 @@ var views = {
 				$('modal#addEvent #btn_cancel').hammer().off('tap');
 				$('modal#addEvent #btn_save').hammer().off('tap');
 				$('modal#addEvent tabs tab').hammer().off('tap');
+				$('modal#addEvent #frm_newEvent #txt_placesSearch').off('keyup');
 				$('modal#addEvent #frm_newEvent').off('submit');
 			},
 			addE : function(){
@@ -536,31 +577,37 @@ var views = {
 					$('modal#addEvent tabgroup').addClass('hidden');
 					$('modal#addEvent tabgroup#'+$('modal#addEvent tab.active').attr('for') ).removeClass('hidden');
 				});
+				$('modal#addEvent #frm_newEvent #txt_placesSearch').on('keyup', function(){
+					views.modals.addEvent.renderPlaces( $(this).val().trim() );
+					$('modal#addEvent #frm_newEvent #txt_placesSearch').removeClass('verified');
+					$('modal#addEvent #frm_newEvent #txt_placeLongitude').val('');
+					$('modal#addEvent #frm_newEvent #txt_placeLatitude').val('');
+					$('modal#addEvent #frm_newEvent #txt_placeVicinity').val('');
+					$('modal#addEvent #frm_newEvent #txt_placeName').val('');
+				});
 				$('modal#addEvent #frm_newEvent').on('submit', function(e){
-					if (meta.lastEventMessageAt >= new Date().subSeconds(1.5)) {
-						console.log('Prevented message spam');
+					if (meta.lastEventSubmittedAt >= new Date().subSeconds(1.5) && views.modals.addEvent.checkNewEventFormIsValid()) {
+						console.log('Prevented event spam');
 					} else {
 						//update when the last message was to prevent spamming events with messages
-						meta.lastEventMessageAt = new Date();
+						meta.lastEventSubmittedAt = new Date();
 						//save the message to Parse
-						var Message = Parse.Object.extend('Message');
-						var msg = new Message();
-						msg.set('text', $('modal#eventDetail #frm_eventMessage #txt_text').val());
-						msg.set('user', Parse.User.current());
-						msg.set('event', meta.lastEvent);
-						msg.save(null, {
+						var Event = Parse.Object.extend('Event');
+						var event = new Event();
+						event.set('name', $('modal#eventDetail #frm_eventMessage #txt_text').val());
+						event.set('createdBy', Parse.User.current());
+						event.set('place', $('modal#eventDetail #frm_eventMessage #txt_placeName').val());
+						event.set('vicinity', $('modal#eventDetail #frm_eventMessage #txt_placeVicinity').val());
+						event.set('eventGeo', new Parse.GeoPoint({latitude: parseFloat($('modal#eventDetail #frm_eventMessage #txt_placeLatitude').val()), longitude: parseFloat($('modal#eventDetail #frm_eventMessage #txt_placeLongitude').val())}))
+						event.set('public', true);
+						event.set('deleted', false);
+						event.save(null, {
 							success: function(message){
-								meta.lastEventMessages.push(message);
-								views.modals.eventDetail.getMessages(meta.lastEvent, false);
-								$('modal#eventDetail #frm_eventMessage')[0].reset();
-								$('modal#eventDetail #frm_eventMessage #btn_sendMessage').prop('disabled', true);
-								setTimeout(function(){
-									$('modal#eventDetail #frm_eventMessage #btn_sendMessage').prop('disabled', false);
-								},1500);
+								//DEBUG
 							},
 							error: function(error){
 								navigator.notification.alert(
-									"Could not send your message.  Not sure why, but we're looking at it.", 
+									"Could not create this event.  Not sure why, but we're looking at it.", 
 									null, 
 									"Oops!",
 									"OK"
@@ -571,6 +618,27 @@ var views = {
 					}
 					e.preventDefault();
 				});
+			},
+			remListE : function(){
+				return $.Deferred(function(f){
+					//remove some events here
+					$('modal#addEvent places place').hammer().off('tap');
+					f.resolve();
+				}).promise();
+			},
+			addListE : function(){
+				return $.Deferred(function(f){
+					//add some events here
+					$('modal#addEvent places place').hammer().on('tap', function(){
+						$('modal#addEvent #frm_newEvent #txt_placeLongitude').val($(this).data('lon'));
+						$('modal#addEvent #frm_newEvent #txt_placeLatitude').val($(this).data('lat'));
+						$('modal#addEvent #frm_newEvent #txt_placeVicinity').val($(this).children('name').text().trim());
+						$('modal#addEvent #frm_newEvent #txt_placeName').val($(this).children('vicinity').text().trim());
+						$('modal#addEvent #frm_newEvent #txt_placesSearch').val($(this).children('name').text().trim());
+						$('modal#addEvent #frm_newEvent #txt_placesSearch').addClass('verified');
+					});
+					f.resolve();
+				}).promise();
 			}
 		},
 		eventDetail : {
@@ -828,13 +896,13 @@ var views = {
 				return $.Deferred(function(f){
 					//remove some events here
 					f.resolve();
-				});
+				}).promise();
 			},
 			addListE : function(){
 				return $.Deferred(function(f){
 					//add some events here
 					f.resolve();
-				});
+				}).promise();
 			}
 		}
 	}
@@ -1073,6 +1141,32 @@ var utility = {
 			.fail(function(jqXHR,textStatus,error){
 				console.error(error);
 			});
+	},
+	deferredGetPlaces : function(keyword, forceDataUpdate){
+		if (typeof keyword == "undefined") {
+			keyword = '';
+		}
+		return $.Deferred(function(gpf){
+			if (forceDataUpdate || meta.googlePlaLastResults.length == 0 || keyword != meta.googlePlaLastKeyword) {
+				meta.googlePlaLastKeyword = keyword;
+				meta.googlePla.nearbySearch({
+					location : meta.googleLoc,
+					radius : meta.userP.searchRadiusInMeters,
+					keyword : meta.googlePlaLastKeyword
+				}, function(d, status){
+					meta.googlePlaLastResults = d;
+					if ( status == google.maps.places.PlacesServiceStatus.OK ) {
+						gpf.resolve(d);
+					} else {
+						gpf.reject({
+							message: "No results nearby for <keyword>"+keyword+"</keyword>.<br>Try being more specific."
+						});
+					}
+				});
+			} else {
+				gpf.resolve(meta.googlePlaLastResults);
+			}
+		}).promise();
 	},
 };
 
