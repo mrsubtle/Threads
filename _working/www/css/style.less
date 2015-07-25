@@ -512,7 +512,7 @@
 			-webkit-appearance: none;
 			margin: 0; padding: 0; border: none !important;
 			display: block;
-			input[type="text"], textarea {
+			input[type="text"], input[type="date"], input[type="datetime-local"], input[type="password"], textarea {
 				-webkit-user-select: initial;
 				position: relative;
 				display: block;
@@ -528,7 +528,7 @@
 				font-weight: 600;
 				color: @mainColor;
 			}
-			input[type="text"]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {
+			input[type="text"]::-webkit-input-placeholder, input[type="date"]::-webkit-input-placeholder, input[type="datetime-local"]::-webkit-input-placeholder, input[type="password"]::-webkit-input-placeholder, textarea::-webkit-input-placeholder {
 				font-family: @uiFamily;
 				font-size: @uiBodySize;
 				font-weight: 400;
@@ -566,7 +566,7 @@
 					display: inline-block;
 					position: absolute;
 					left: 0rem;
-					width: 80%;
+					width: 100%;
 					line-height: @touchBase;
 					white-space: nowrap;
 					text-overflow: ellipsis;
@@ -575,22 +575,47 @@
 					font-size: @uiBodySize;
 					font-weight: 400;
 					padding-left: 1rem;
+					padding-right: (@touchBase * 1.25);
 					opacity: 0.67;
 				}
 				input[type="checkbox"]:checked {
 					background-color: transparent;
 				}
-				input[type="checkbox"]:checked + label::before {
+				input[type="checkbox"] + label::before {
+					content: '';
+					display: inline-block;
+					position: absolute;
+					//width: (@touchBase * (40/60));
+					width: (@touchBase * (22/60));
+					height: (@touchBase * (22/60));
+					top: (@touchBase * (16/60));
+					right: (@touchBase * (20/60));
+					background-color: darken(@appBGsolid, 5%);
+					border: 0.2rem solid darken(@appBGsolid, 5%);
+					border-radius: (@touchBase / 3);
+				}
+				input[type="checkbox"]:checked + label::after {
+					content: '';
+					display: inline-block;
+					position: absolute;
+					width: (@touchBase * (16/60));
+					height: (@touchBase * (16/60));
+					top: (@touchBase * (21/60));
+					right: (@touchBase * (25/60));
+					background-color: @successColor;
+					border-radius: (@touchBase / 4);
+				}
+				/*input[type="checkbox"] + label::after {
 					content: '';
 					display: inline-block;
 					position: absolute;
 					width: (@touchBase / 4);
 					height: (@touchBase / 4);
-					top: (@touchBase / 4);
+					top: (@touchBase * 0.35);
 					right: (@touchBase / 4);
-					background-color: @successColor;
+					background-color: darken(@appBGsolid, 15%);
 					border-radius: (@touchBase / 4);
-				}
+				}*/
 			}
 		}
 	}
@@ -685,6 +710,9 @@
 		}
 		form#frm_login {
 			width: 70%;
+			input {
+				text-align: center;
+			}
 		}
 		div#feedback_login {
 			text-transform: uppercase;
@@ -771,15 +799,26 @@
 				input#txt_placesSearch.verified {
 					color: @successColor;
 				}
+				header {
+					display: block;
+					position: relative;
+					padding: 0.3rem 1rem 0.3rem 2rem;
+					font-weight: 500;
+					font-size: 1.1rem;
+					text-transform: uppercase;
+					opacity: 0.37;
+				}
 				places {
 					display: block;
 					background-color: @appBGsolid;
 					border-top: 0.1rem solid darken(@modalBG, 3%);
+					padding-left: 2rem;
 					place {
 						display: block;
 						position: relative;
-						padding: 1rem;
+						padding: 1rem 1rem 1rem 0rem;
 						border-bottom: 0.1rem solid darken(@modalBG, 3%);
+						border-right: 0.5rem solid @appBGsolid;
 						name {
 							display: block;
 							font-size: 1.7rem;
@@ -790,6 +829,12 @@
 							font-size: 1.3rem;
 							font-weight: 500;
 							opacity: 0.67;
+						}
+						&.selected {
+							border-right: 0.5rem solid @successColor;
+							name, vicinity {
+								color: @successColor;
+							}
 						}
 					}
 					error {

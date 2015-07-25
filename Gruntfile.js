@@ -105,5 +105,6 @@ module.exports = function(grunt) {
   //grunt.registerTask('test', ['jshint']);
 
   grunt.registerTask('default', ['uglify', 'copy', 'less', 'watch']);
+  //grunt.registerTask('default', ['copy', 'less', 'watch']);
   //grunt.registerTask('server', ['web_server']);
 };

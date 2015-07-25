@@ -66,6 +66,7 @@
 					<form id="frm_newEvent">
 						<fieldset>
 							<input id="txt_name" type="text" placeholder="Event name" autocorrect="on" autocapitalize="sentence" maxlength="140">
+							<input id="dte_eventAt" type="datetime-local" placeholder="Enter event date and time">
 						</fieldset>
 						<fieldset>
 							<textarea id="txt_tags" placeholder="#tag, #topic, #keyword" autocorrect="off" autocapitalize="off" maxlength="512"></textarea>
@@ -75,11 +76,14 @@
 							</field>
 						</fieldset>
 						<fieldset>
-							<input id="txt_placesSearch" type="text" class="haslabel" data-label="Address" placeholder="Bob's Beanery, or 1234 Some Way" autocorrect="off" autocapitalize="sentence">
+							<input id="txt_placesSearch" type="text" class="haslabel" data-label="Address" placeholder="Search for a place or address" autocorrect="off" autocapitalize="sentence">
 							<input id="txt_placeLongitude" type="hidden">
 							<input id="txt_placeLatitude" type="hidden">
 							<input id="txt_placeVicinity" type="hidden">
 							<input id="txt_placeName" type="hidden">
+							<header>
+								Nearby places
+							</header>
 							<places>
 								<error>
 									No results to display.

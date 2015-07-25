@@ -346,8 +346,6 @@ var views = {
 			},
 			getData : function(forceDataUpdate){
 				return $.Deferred(function(df){
-					var errors = [];
-					var successes = [];
 					$('screen#start #btn_refreshData').addClass('disabled');
 					$('screen#start #btn_refreshData').addClass('infiniteSpin');
 					if (forceDataUpdate || meta.userAttendanceLastRetrieved <= new Date().subMinutes(5) || meta.userEventsNearbyLastRetrieved <= new Date().subMinutes(15)) { 
@@ -509,7 +507,20 @@ var views = {
 				
 				//Initialize Modal Events
 				views.modals.addEvent.initialize();
-				views.modals.addEvent.renderPlaces();
+				utility.deferredGetLocation(false, false).done(views.modals.addEvent.renderPlaces(''));
+
+				//set the time of the event to be now
+					var currentDate = new Date();
+					// Find the current time zone's offset in milliseconds.
+					var timezoneOffset = currentDate.getTimezoneOffset() * 60 * 1000;
+					// Subtract the time zone offset from the current UTC date, and pass
+					//  that into the Date constructor to get a date whose UTC date/time is
+					//  adjusted by timezoneOffset for display purposes.
+					var localDate = new Date(currentDate.getTime() - timezoneOffset);
+					// Get that local date's ISO date string and remove the Z.
+					var localDateISOString = localDate.toISOString().replace('Z', '');
+					// Finally, set the input's value to that timezone-less string.
+					$('modal#addEvent #frm_newEvent #dte_eventAt').val(localDateISOString);
 
 				//Show the modal
 				$('screen').not('.hidden').addClass('fadeAway');
@@ -519,7 +530,9 @@ var views = {
 				$('modal#addEvent tabgroup#'+$('modal#addEvent tab.active').attr('for') ).removeClass('hidden');
 			},
 			renderPlaces : function(keyword){
-				if (typeof keyword == "undefined") keyword = '';
+				if (typeof keyword == "undefined"){
+					keyword = '';
+				}
 				//set the forceupdate to false, to use cached places if we have them
 				var forceDataUpdate = false;
 				$('modal#addEvent places').html('');
@@ -536,14 +549,17 @@ var views = {
 						};
 						$('modal#addEvent places').append( t(dO) );
 					});
-					views.modals.addEvent.remListE().done( views.modals.addEvent.addListE );
+					views.modals.addEvent.remListE().done( function(){
+						views.modals.addEvent.addListE();
+						touch.reset();
+					});
 				}).fail(function(e){
 					console.error(e.message);
 					$('modal#addEvent places').html('<error>' + e.message + '</error>');
 				});
 			},
 			checkNewEventFormIsValid : function(){
-				if ( $('modal#addEvent #frm_newEvent #txt_name').val().length >= 5 && $('modal#addEvent #frm_newEvent #txt_placesSearch').hasClass('verified') ) {
+				if ( $('modal#addEvent #frm_newEvent #txt_name').val().length >= 5 && $('modal#addEvent #frm_newEvent #dte_eventAt').val().length > 0 && $('modal#addEvent #frm_newEvent #txt_placesSearch').hasClass('verified') ) {
 					$('modal#addEvent top #btn_save').removeClass('disabled');
 					return true;
 				} else {
@@ -561,6 +577,9 @@ var views = {
 				$('modal#addEvent #btn_cancel').hammer().off('tap');
 				$('modal#addEvent #btn_save').hammer().off('tap');
 				$('modal#addEvent tabs tab').hammer().off('tap');
+				$('modal#addEvent #frm_newEvent #txt_name').off('keyup');
+				$('modal#addEvent #frm_newEvent #dte_eventAt').off('blur');
+				$('modal#addEvent #frm_newEvent #txt_tags').off('blur');
 				$('modal#addEvent #frm_newEvent #txt_placesSearch').off('keyup');
 				$('modal#addEvent #frm_newEvent').off('submit');
 			},
@@ -569,7 +588,7 @@ var views = {
 					views.modals.addEvent.hide();
 				});
 				$('modal#addEvent #btn_save').hammer().on('tap', function(){
-					alert('Save tapped');
+					$('modal#addEvent #frm_newEvent').submit();
 				});
 				$('modal#addEvent tabs tab').hammer().on('tap', function(){
 					$('modal#addEvent tabs tab').removeClass('active');
@@ -577,33 +596,107 @@ var views = {
 					$('modal#addEvent tabgroup').addClass('hidden');
 					$('modal#addEvent tabgroup#'+$('modal#addEvent tab.active').attr('for') ).removeClass('hidden');
 				});
+				$('modal#addEvent #frm_newEvent #txt_name').on('keyup', function(){
+					views.modals.addEvent.checkNewEventFormIsValid();
+				});
+				$('modal#addEvent #frm_newEvent #dte_eventAt').on('blur', function(){
+					if ($(this).val() == "") {
+						//set the time of the event to be now
+							var currentDate = new Date();
+							// Find the current time zone's offset in milliseconds.
+							var timezoneOffset = currentDate.getTimezoneOffset() * 60 * 1000;
+							// Subtract the time zone offset from the current UTC date, and pass
+							//  that into the Date constructor to get a date whose UTC date/time is
+							//  adjusted by timezoneOffset for display purposes.
+							var localDate = new Date(currentDate.getTime() - timezoneOffset);
+							// Get that local date's ISO date string and remove the Z.
+							var localDateISOString = localDate.toISOString().replace('Z', '');
+							// Finally, set the input's value to that timezone-less string.
+							$('modal#addEvent #frm_newEvent #dte_eventAt').val(localDateISOString);
+					} else if ( new Date($(this).val()+"Z") < new Date() ) {
+						//date was in the past
+						navigator.notification.alert(
+							"That date is in the past. You have to create a future-dated event, silly.", 
+							function(){
+								//set the time of the event to be now
+									var currentDate = new Date();
+									// Find the current time zone's offset in milliseconds.
+									var timezoneOffset = currentDate.getTimezoneOffset() * 60 * 1000;
+									// Subtract the time zone offset from the current UTC date, and pass
+									//  that into the Date constructor to get a date whose UTC date/time is
+									//  adjusted by timezoneOffset for display purposes.
+									var localDate = new Date(currentDate.getTime() - timezoneOffset);
+									// Get that local date's ISO date string and remove the Z.
+									var localDateISOString = localDate.toISOString().replace('Z', '');
+									// Finally, set the input's value to that timezone-less string.
+									$('modal#addEvent #frm_newEvent #dte_eventAt').val(localDateISOString);
+							}, 
+							"Oops!",
+							"Oh right, I forgot!"
+						);
+					}
+					views.modals.addEvent.checkNewEventFormIsValid();
+				});
+				$('modal#addEvent #frm_newEvent #txt_tags').on('blur', function(){
+					console.log(utility.getHashtags($(this).val()));
+					views.modals.addEvent.checkNewEventFormIsValid();
+				});
 				$('modal#addEvent #frm_newEvent #txt_placesSearch').on('keyup', function(){
 					views.modals.addEvent.renderPlaces( $(this).val().trim() );
+					$('modal#addEvent #frm_newEvent place').removeClass('selected');
 					$('modal#addEvent #frm_newEvent #txt_placesSearch').removeClass('verified');
 					$('modal#addEvent #frm_newEvent #txt_placeLongitude').val('');
 					$('modal#addEvent #frm_newEvent #txt_placeLatitude').val('');
 					$('modal#addEvent #frm_newEvent #txt_placeVicinity').val('');
 					$('modal#addEvent #frm_newEvent #txt_placeName').val('');
+					views.modals.addEvent.checkNewEventFormIsValid();
 				});
 				$('modal#addEvent #frm_newEvent').on('submit', function(e){
-					if (meta.lastEventSubmittedAt >= new Date().subSeconds(1.5) && views.modals.addEvent.checkNewEventFormIsValid()) {
+					if (meta.lastEventSubmittedAt >= new Date().subSeconds(5) && views.modals.addEvent.checkNewEventFormIsValid()) {
 						console.log('Prevented event spam');
 					} else {
 						//update when the last message was to prevent spamming events with messages
 						meta.lastEventSubmittedAt = new Date();
 						//save the message to Parse
 						var Event = Parse.Object.extend('Event');
-						var event = new Event();
-						event.set('name', $('modal#eventDetail #frm_eventMessage #txt_text').val());
-						event.set('createdBy', Parse.User.current());
-						event.set('place', $('modal#eventDetail #frm_eventMessage #txt_placeName').val());
-						event.set('vicinity', $('modal#eventDetail #frm_eventMessage #txt_placeVicinity').val());
-						event.set('eventGeo', new Parse.GeoPoint({latitude: parseFloat($('modal#eventDetail #frm_eventMessage #txt_placeLatitude').val()), longitude: parseFloat($('modal#eventDetail #frm_eventMessage #txt_placeLongitude').val())}))
-						event.set('public', true);
-						event.set('deleted', false);
-						event.save(null, {
-							success: function(message){
-								//DEBUG
+						var ev = new Event();
+						ev.set('name', $('modal#addEvent #frm_newEvent #txt_name').val());
+						ev.set('eventAt', new Date($('modal#addEvent #frm_newEvent #dte_eventAt').val()+"Z"));
+						ev.set('createdBy', Parse.User.current());
+						ev.set('place', $('modal#addEvent #frm_newEvent #txt_placeName').val());
+						ev.set('vicinity', $('modal#addEvent #frm_newEvent #txt_placeVicinity').val());
+						ev.set('eventGeo', new Parse.GeoPoint({latitude: parseFloat($('modal#addEvent #frm_newEvent #txt_placeLatitude').val()), longitude: parseFloat($('modal#addEvent #frm_newEvent #txt_placeLongitude').val())}))
+						ev.set('public', true);
+						ev.set('deleted', false);
+						ev.set('tags', utility.getHashtags( $('modal#addEvent #frm_newEvent #txt_tags').val() ));
+						ev.save(null, {
+							success: function(createdEvent){
+								//now that the event is created, tell the system the user creating it is going to attend
+								var Attendance = Parse.Object.extend('Attendance');
+								var attend = new Attendance();
+								attend.set("event", createdEvent);
+								attend.set("user", Parse.User.current());
+								attend.set("status", 1);
+								attend.save(null,{
+									sucess : function(newAttendance){
+										console.log('All object are saved successfully.');
+										views.screens.start.getData(true);
+										views.modals.addEvent.hide();
+										views.modals.eventDetail.show(createdEvent.id);
+										$('modal#addEvent #frm_newEvent place').removeClass('selected');
+										$('modal#addEvent #frm_newEvent #txt_placesSearch').removeClass('verified');
+										$('modal#addEvent #frm_newEvent')[0].reset();
+									},
+									error: function(error){
+										navigator.notification.alert(
+											"Could not subscribe to this event.  Not sure why, but we're looking at it.", 
+											null, 
+											"Oops!",
+											"OK"
+										);
+										console.error(error);
+									}
+								});
 							},
 							error: function(error){
 								navigator.notification.alert(
@@ -612,7 +705,7 @@ var views = {
 									"Oops!",
 									"OK"
 								);
-								console.log(error);
+								console.error(error);
 							}
 						});
 					}
@@ -630,12 +723,24 @@ var views = {
 				return $.Deferred(function(f){
 					//add some events here
 					$('modal#addEvent places place').hammer().on('tap', function(){
-						$('modal#addEvent #frm_newEvent #txt_placeLongitude').val($(this).data('lon'));
-						$('modal#addEvent #frm_newEvent #txt_placeLatitude').val($(this).data('lat'));
-						$('modal#addEvent #frm_newEvent #txt_placeVicinity').val($(this).children('name').text().trim());
-						$('modal#addEvent #frm_newEvent #txt_placeName').val($(this).children('vicinity').text().trim());
-						$('modal#addEvent #frm_newEvent #txt_placesSearch').val($(this).children('name').text().trim());
-						$('modal#addEvent #frm_newEvent #txt_placesSearch').addClass('verified');
+						$('modal#addEvent #frm_newEvent place').removeClass('selected');
+						$(this).toggleClass('selected');
+						if ( $(this).hasClass('selected') ){
+							$('modal#addEvent #frm_newEvent #txt_placeLongitude').val($(this).data('lon'));
+							$('modal#addEvent #frm_newEvent #txt_placeLatitude').val($(this).data('lat'));
+							$('modal#addEvent #frm_newEvent #txt_placeVicinity').val($(this).children('name').text().trim());
+							$('modal#addEvent #frm_newEvent #txt_placeName').val($(this).children('vicinity').text().trim());
+							$('modal#addEvent #frm_newEvent #txt_placesSearch').val($(this).children('name').text().trim());
+							$('modal#addEvent #frm_newEvent #txt_placesSearch').addClass('verified');
+						} else {
+							$('modal#addEvent #frm_newEvent #txt_placeLongitude').val('');
+							$('modal#addEvent #frm_newEvent #txt_placeLatitude').val('');
+							$('modal#addEvent #frm_newEvent #txt_placeVicinity').val('');
+							$('modal#addEvent #frm_newEvent #txt_placeName').val('');
+							$('modal#addEvent #frm_newEvent #txt_placesSearch').val('');
+							$('modal#addEvent #frm_newEvent #txt_placesSearch').removeClass('verified');
+						}
+						views.modals.addEvent.checkNewEventFormIsValid();
 					});
 					f.resolve();
 				}).promise();
@@ -958,6 +1063,19 @@ var menu = {
 };
 
 var utility = {
+	getHashtags : function(string) {
+		var regex = /(?:^|\s)(?:#)([a-zA-Z\d_-]+)/gm;
+		var matches = [];
+		var match;
+
+		while ((match = regex.exec(string))) {
+			matches.push(match[1]);
+		}
+
+		var uniqueMatches = _.uniq(matches, true)
+
+		return uniqueMatches;
+	},
 	formatDate : function(dateObject){
 		return moment(dateObject).format("MMM Do, h:mm A");
 	},
@@ -1092,7 +1210,7 @@ var utility = {
 							'longitude' : position.coords.longitude
 						});
 						Parse.User.current().set('Geo',point);
-						Parse.User.current().set('GeoAt',new Date);
+						Parse.User.current().set('GeoAt', new Date());
 						Parse.User.current().save(null,{
 							success : function(user){
 								console.log("Parse: Updated User's Geolocation");
