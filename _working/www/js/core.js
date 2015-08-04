@@ -186,7 +186,7 @@ var app = {
 };
 
 var views = {
-	initialize: function(screen) {
+	initialize : function(screen) {
 		console.log('View inits');
 		menu.initialize();
 
@@ -388,7 +388,7 @@ var views = {
 											var dO = {}
 											dO.id = e.id;
 											dO.name = e.get('name');
-											dO.eventFromNow = moment(e.get('eventAt').valueOf()).local().fromNow();
+											dO.eventFromNow = moment(e.get('eventAt').valueOf()).fromNow();
 											$('screen#start content #nextEvents list').append( t(dO) );
 										}
 									});
@@ -429,7 +429,7 @@ var views = {
 										var dO = {}
 										dO.id = o.id;
 										dO.name = o.get('name');
-										dO.eventFromNow = moment(o.get('eventAt').valueOf()).local().fromNow();
+										dO.eventFromNow = moment(o.get('eventAt').valueOf()).fromNow();
 										$('screen#start content #nearbyEvents list').append( t(dO) );
 										
 									});
@@ -509,6 +509,7 @@ var views = {
 			show : function(eventID){
 				//UI iniitalize
 				$('modal#addEvent top #btn_save').addClass('disabled');
+				$('modal#addEvent').scrollTop(0);
 				
 				//Initialize Modal Events
 				views.modals.addEvent.initialize();
@@ -574,12 +575,12 @@ var views = {
 			createEvent : function(){
 				//update when the last message was to prevent spamming events with messages
 				meta.lastEventSubmittedAt = new Date();
-				var eAt = new Date($('modal#addEvent #frm_newEvent #dte_eventAt').val()+"Z");
+				var eAt = moment($('modal#addEvent #frm_newEvent #dte_eventAt').val()).local().valueOf();
 				//save the message to Parse
 				var Event = Parse.Object.extend('Event');
 				var ev = new Event();
 				ev.set('name', $('modal#addEvent #frm_newEvent #txt_name').val());
-				ev.set('eventAt', eAt);
+				ev.set('eventAt', new Date(eAt));
 				ev.set('createdBy', Parse.User.current());
 				ev.set('place', $('modal#addEvent #frm_newEvent #txt_placeName').val());
 				ev.set('vicinity', $('modal#addEvent #frm_newEvent #txt_placeVicinity').val());
@@ -683,7 +684,7 @@ var views = {
 							var localDateISOString = localDate.toISOString().replace('Z', '');
 							// Finally, set the input's value to that timezone-less string.
 							$('modal#addEvent #frm_newEvent #dte_eventAt').val(localDateISOString);
-					} else if ( new Date($(this).val()+"Z").valueOf() < new Date().valueOf() ) {
+					} else if ( moment($(this).val()).local().valueOf() < new Date().valueOf() ) {
 						//date was in the past
 						navigator.notification.alert(
 							"That date is in the past. You have to create a future-dated event, silly.", 
@@ -797,10 +798,14 @@ var views = {
 						success: function(event){
 							meta.lastEvent = event;
 							//got the event
+							//DEBUG
+							console.log( event.get('eventAt') );
+							console.log( event.get('eventAt').valueOf() );
+
 							var lat = event.get('eventGeo').latitude;
 							var lng = event.get('eventGeo').longitude;
 							$('modal#eventDetail event name').html(event.get('name'));
-							$('modal#eventDetail event date fromnow').html(moment(event.get('eventAt')).local().fromNow());
+							$('modal#eventDetail event date fromnow').html(moment(event.get('eventAt').valueOf()).fromNow());
 							$('modal#eventDetail event date fulldate').html(utility.formatDate(event.get('eventAt')));
 							$('modal#eventDetail top').css('background-image','url(http://maps.googleapis.com/maps/api/staticmap?center='+lat+','+lng+'&zoom=15&format=png&sensor=false&size=640x480&maptype=roadmap&style=element:labels.icon|visibility:off&style=feature:administrative.country|element:labels|visibility:off&style=feature:administrative.province|element:labels|visibility:off&style=feature:road|visibility:simplified&style=feature:road.local|element:labels|visibility:off&style=feature:road.arterial|element:labels.icon|visibility:off&style=feature:water|visibility:simplified&style=feature:landscape|visibility:simplified&style=feature:poi|visibility:simplified&style=element:labels|visibility:off&style=feature:transit|element:geometry|visibility:off&style=feature:road)');
 							
@@ -868,12 +873,12 @@ var views = {
 						// i = array index ##
 						// a = full array
 						//DEBUG
-						console.log(o);
+						//console.log(o);
 						var msg = {};
 						msg.id = o.id;
 						msg.userName = o.get('user').get('firstname');
 						msg.text = o.get('text');
-						msg.date = moment(o.createdAt).fromNow();
+						msg.date = moment(o.createdAt.valueOf()).fromNow();
 						$('modal#eventDetail content').append( t(msg) );
 					});
 					f.resolve();
@@ -958,7 +963,7 @@ var views = {
 				});
 				$('modal#eventDetail #btn_attendEvent').hammer().on('tap', function(){
 					navigator.notification.confirm(
-						"You'll be there " + moment().fromNow(meta.lastEvent.get('eventAt')) + ".", 
+						"You'll be there on " + utility.formatDate(meta.lastEvent.get('eventAt')) + ".", 
 						function(buttonIndex){
 							if (buttonIndex == 1) {
 								var Attendance = Parse.Object.extend('Attendance');
@@ -1103,7 +1108,8 @@ var utility = {
 		return uniqueMatches;
 	},
 	formatDate : function(dateObject){
-		return moment(dateObject.valueOf()).local().format("MMM Do, h:mm A");
+		//assume the timestamp is UTC
+		return moment(dateObject.valueOf()).format("MMM Do, h:mm A");
 	},
 	roundDate : function(dateObject){
 		if (typeof dateObject == "undefined") {
