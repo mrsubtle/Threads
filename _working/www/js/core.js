@@ -54,7 +54,7 @@ var meta = {
 		}
 	},
 	userP : {
-		searchRadiusInMeters : 1000
+		searchRadiusInMeters : 50000
 	},
 	userAttendance : [],
 	userAttendanceLastRetrieved : new Date().setFullYear(2000,0,1),
@@ -388,7 +388,7 @@ var views = {
 											var dO = {}
 											dO.id = e.id;
 											dO.name = e.get('name');
-											dO.eventFromNow = moment(e.get('eventAt')).fromNow();
+											dO.eventFromNow = moment(e.get('eventAt').valueOf()).local().fromNow();
 											$('screen#start content #nextEvents list').append( t(dO) );
 										}
 									});
@@ -411,7 +411,7 @@ var views = {
 							nearbyEventQuery.equalTo('public', true);
 							nearbyEventQuery.notEqualTo('createdBy', Parse.User.current());
 							nearbyEventQuery.greaterThan('eventAt', new Date().subMinutes(45));
-							nearbyEventQuery.withinKilometers('eventGeo', Parse.User.current().get('Geo'), 200);
+							nearbyEventQuery.withinKilometers('eventGeo', Parse.User.current().get('Geo'), (meta.userP.searchRadiusInMeters/1000));
 							//nearbyEventQuery.withinKilometers(100.0);
 							nearbyEventQuery.limit(10);
 							nearbyEventQuery.find({
@@ -429,7 +429,7 @@ var views = {
 										var dO = {}
 										dO.id = o.id;
 										dO.name = o.get('name');
-										dO.eventFromNow = moment(o.get('eventAt')).fromNow();
+										dO.eventFromNow = moment(o.get('eventAt').valueOf()).local().fromNow();
 										$('screen#start content #nearbyEvents list').append( t(dO) );
 										
 									});
@@ -548,8 +548,8 @@ var views = {
 						//console.log(o);
 						var dO = {
 							name : o.name,
-							lat : o.geometry.location.A,
-							lon : o.geometry.location.F,
+							lat : o.geometry.location.lat(),
+							lon : o.geometry.location.lng(),
 							vicinity : o.vicinity
 						};
 						$('modal#addEvent places').append( t(dO) );
@@ -569,6 +569,71 @@ var views = {
 					return true;
 				} else {
 					return false;
+				}
+			},
+			createEvent : function(){
+				//update when the last message was to prevent spamming events with messages
+				meta.lastEventSubmittedAt = new Date();
+				var eAt = new Date($('modal#addEvent #frm_newEvent #dte_eventAt').val()+"Z");
+				//save the message to Parse
+				var Event = Parse.Object.extend('Event');
+				var ev = new Event();
+				ev.set('name', $('modal#addEvent #frm_newEvent #txt_name').val());
+				ev.set('eventAt', eAt);
+				ev.set('createdBy', Parse.User.current());
+				ev.set('place', $('modal#addEvent #frm_newEvent #txt_placeName').val());
+				ev.set('vicinity', $('modal#addEvent #frm_newEvent #txt_placeVicinity').val());
+				ev.set('eventGeo', new Parse.GeoPoint({latitude: parseFloat($('modal#addEvent #frm_newEvent #txt_placeLatitude').val()), longitude: parseFloat($('modal#addEvent #frm_newEvent #txt_placeLongitude').val())}))
+				ev.set('public', $('modal#addEvent #frm_newEvent #chk_public').prop('checked'));
+				ev.set('deleted', false);
+				ev.set('tags', utility.getHashtags( $('modal#addEvent #frm_newEvent #txt_tags').val() ));
+				ev.save(null, {
+					success: function(createdEvent){
+						console.log('Created event ID: ' + createdEvent.id);
+						//now that the event is created, tell the system the user creating it is going to attend
+						views.modals.addEvent.createAttendance(createdEvent);
+					},
+					error: function(error){
+						navigator.notification.alert(
+							"Could not create this event.  Not sure why, but we're looking at it.", 
+							null, 
+							"Oops!",
+							"OK"
+						);
+						console.error(error);
+					}
+				});
+			},
+			createAttendance : function(eventObject){
+				if (typeof eventObject != 'undefined') {
+					//now that the event is created, tell the system the user creating it is going to attend
+					var Attendance = Parse.Object.extend('Attendance');
+					var attend = new Attendance();
+					attend.set("event", eventObject);
+					attend.set("user", Parse.User.current());
+					attend.set("status", 1);
+					attend.save(null, {
+						success : function(newAttendance){
+							console.log('Created attendance ID: ' + newAttendance.id);
+							views.screens.start.getData(true);
+							views.modals.addEvent.hide();
+							views.modals.eventDetail.show(eventObject.id);
+							$('modal#addEvent #frm_newEvent place').removeClass('selected');
+							$('modal#addEvent #frm_newEvent #txt_placesSearch').removeClass('verified');
+							$('modal#addEvent #frm_newEvent')[0].reset();
+						},
+						error: function(error){
+							navigator.notification.alert(
+								"Could not subscribe to this event.  Not sure why, but we're looking at it.", 
+								null, 
+								"Oops!",
+								"OK"
+							);
+							console.error(error);
+						}
+					});
+				} else {
+					console.error('An event object is required for the views.modals.addEvent.createAttendance() Method.');
 				}
 			},
 			hide : function(){
@@ -618,7 +683,7 @@ var views = {
 							var localDateISOString = localDate.toISOString().replace('Z', '');
 							// Finally, set the input's value to that timezone-less string.
 							$('modal#addEvent #frm_newEvent #dte_eventAt').val(localDateISOString);
-					} else if ( new Date($(this).val()+"Z") < new Date() ) {
+					} else if ( new Date($(this).val()+"Z").valueOf() < new Date().valueOf() ) {
 						//date was in the past
 						navigator.notification.alert(
 							"That date is in the past. You have to create a future-dated event, silly.", 
@@ -660,60 +725,8 @@ var views = {
 					if (meta.lastEventSubmittedAt >= new Date().subSeconds(5) && views.modals.addEvent.checkNewEventFormIsValid()) {
 						console.log('Prevented event spam');
 					} else {
-						//update when the last message was to prevent spamming events with messages
-						meta.lastEventSubmittedAt = new Date();
-						var eAt = new Date($('modal#addEvent #frm_newEvent #dte_eventAt').val()+"Z");
 						//save the message to Parse
-						var Event = Parse.Object.extend('Event');
-						var ev = new Event();
-						ev.set('name', $('modal#addEvent #frm_newEvent #txt_name').val());
-						ev.set('eventAt', eAt.valueOf());
-						ev.set('createdBy', Parse.User.current());
-						ev.set('place', $('modal#addEvent #frm_newEvent #txt_placeName').val());
-						ev.set('vicinity', $('modal#addEvent #frm_newEvent #txt_placeVicinity').val());
-						ev.set('eventGeo', new Parse.GeoPoint({latitude: parseFloat($('modal#addEvent #frm_newEvent #txt_placeLatitude').val()), longitude: parseFloat($('modal#addEvent #frm_newEvent #txt_placeLongitude').val())}))
-						ev.set('public', true);
-						ev.set('deleted', false);
-						ev.set('tags', utility.getHashtags( $('modal#addEvent #frm_newEvent #txt_tags').val() ));
-						ev.save(null, {
-							success: function(createdEvent){
-								//now that the event is created, tell the system the user creating it is going to attend
-								var Attendance = Parse.Object.extend('Attendance');
-								var attend = new Attendance();
-								attend.set("event", createdEvent);
-								attend.set("user", Parse.User.current());
-								attend.set("status", 1);
-								attend.save(null,{
-									sucess : function(newAttendance){
-										console.log('All object are saved successfully.');
-										views.screens.start.getData(true);
-										views.modals.addEvent.hide();
-										views.modals.eventDetail.show(createdEvent.id);
-										$('modal#addEvent #frm_newEvent place').removeClass('selected');
-										$('modal#addEvent #frm_newEvent #txt_placesSearch').removeClass('verified');
-										$('modal#addEvent #frm_newEvent')[0].reset();
-									},
-									error: function(error){
-										navigator.notification.alert(
-											"Could not subscribe to this event.  Not sure why, but we're looking at it.", 
-											null, 
-											"Oops!",
-											"OK"
-										);
-										console.error(error);
-									}
-								});
-							},
-							error: function(error){
-								navigator.notification.alert(
-									"Could not create this event.  Not sure why, but we're looking at it.", 
-									null, 
-									"Oops!",
-									"OK"
-								);
-								console.error(error);
-							}
-						});
+						views.modals.addEvent.createEvent();
 					}
 					e.preventDefault();
 				});
@@ -760,8 +773,14 @@ var views = {
 				//UI iniitalize
 				
 				if (typeof eventID != "undefined") {
+					//force the "Attend event" button to be shown first
+					$('modal#eventDetail bottom #frm_eventMessage').addClass('hidden');
+					$('modal#eventDetail bottom #btn_attendEvent').removeClass('hidden');
+
+					//get the event data
 					$.when( views.modals.eventDetail.getData(eventID) ).done( views.modals.eventDetail.initialize() );
 
+					//do something
 					$('screen').not('.hidden').addClass('fadeAway');
 					//$('modal#eventDetail top #btn_save').addClass('disabled');
 					$('modal#eventDetail').removeClass('viewportBottom');
@@ -781,7 +800,7 @@ var views = {
 							var lat = event.get('eventGeo').latitude;
 							var lng = event.get('eventGeo').longitude;
 							$('modal#eventDetail event name').html(event.get('name'));
-							$('modal#eventDetail event date fromnow').html(moment(event.get('eventAt')).fromNow());
+							$('modal#eventDetail event date fromnow').html(moment(event.get('eventAt')).local().fromNow());
 							$('modal#eventDetail event date fulldate').html(utility.formatDate(event.get('eventAt')));
 							$('modal#eventDetail top').css('background-image','url(http://maps.googleapis.com/maps/api/staticmap?center='+lat+','+lng+'&zoom=15&format=png&sensor=false&size=640x480&maptype=roadmap&style=element:labels.icon|visibility:off&style=feature:administrative.country|element:labels|visibility:off&style=feature:administrative.province|element:labels|visibility:off&style=feature:road|visibility:simplified&style=feature:road.local|element:labels|visibility:off&style=feature:road.arterial|element:labels.icon|visibility:off&style=feature:water|visibility:simplified&style=feature:landscape|visibility:simplified&style=feature:poi|visibility:simplified&style=element:labels|visibility:off&style=feature:transit|element:geometry|visibility:off&style=feature:road)');
 							
@@ -872,6 +891,7 @@ var views = {
 						attendees.find({
 							success: function(data){
 								meta.lastEventAttendance = data;
+								meta.lastEventUserAttending = false;
 								meta.lastEventAttendanceTimestamp = new Date();
 								$('modal#eventDetail top #btn_attendees label').html(''+data.length+'');
 								//check if the current user is attending this event
@@ -881,11 +901,11 @@ var views = {
 									}
 								});
 								if (meta.lastEventUserAttending) {
-									$('modal#eventDetail #frm_eventMessage').removeClass('hidden');
-									$('modal#eventDetail #btn_attendEvent').addClass('hidden');
+									$('modal#eventDetail bottom #frm_eventMessage').removeClass('hidden');
+									$('modal#eventDetail bottom #btn_attendEvent').addClass('hidden');
 								} else {
-									$('modal#eventDetail #frm_eventMessage').addClass('hidden');
-									$('modal#eventDetail #btn_attendEvent').removeClass('hidden');
+									$('modal#eventDetail bottom #frm_eventMessage').addClass('hidden');
+									$('modal#eventDetail bottom #btn_attendEvent').removeClass('hidden');
 								}
 								f.resolve();
 							},
@@ -1083,7 +1103,7 @@ var utility = {
 		return uniqueMatches;
 	},
 	formatDate : function(dateObject){
-		return moment(dateObject).format("MMM Do, h:mm A");
+		return moment(dateObject.valueOf()).local().format("MMM Do, h:mm A");
 	},
 	roundDate : function(dateObject){
 		if (typeof dateObject == "undefined") {
