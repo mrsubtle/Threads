@@ -27,6 +27,11 @@ Date.prototype.subSeconds= function(s){
 	this.setSeconds(this.getSeconds()-s);
 	return this;
 }
+Date.prototype.toUTC = function(){
+	//this requires the Moment.js library to be loaded
+	if (moment) { this.setMinutes(this.getMinutes() + moment().utcOffset()); }
+	return this;
+}
 
 var strings = {
 	loginFail : "Login details do not exist. /sadface"
@@ -657,11 +662,12 @@ var views = {
 					} else {
 						//update when the last message was to prevent spamming events with messages
 						meta.lastEventSubmittedAt = new Date();
+						var eAt = new Date($('modal#addEvent #frm_newEvent #dte_eventAt').val()+"Z");
 						//save the message to Parse
 						var Event = Parse.Object.extend('Event');
 						var ev = new Event();
 						ev.set('name', $('modal#addEvent #frm_newEvent #txt_name').val());
-						ev.set('eventAt', new Date($('modal#addEvent #frm_newEvent #dte_eventAt').val()+"Z"));
+						ev.set('eventAt', eAt.valueOf());
 						ev.set('createdBy', Parse.User.current());
 						ev.set('place', $('modal#addEvent #frm_newEvent #txt_placeName').val());
 						ev.set('vicinity', $('modal#addEvent #frm_newEvent #txt_placeVicinity').val());
@@ -1078,6 +1084,14 @@ var utility = {
 	},
 	formatDate : function(dateObject){
 		return moment(dateObject).format("MMM Do, h:mm A");
+	},
+	roundDate : function(dateObject){
+		if (typeof dateObject == "undefined") {
+			var dateObject = new Date();
+		}
+		if ( moment().utc(dateObject).isUTC() ) {
+
+		}
 	},
 	dateDiff : function(date1, date2){
 		if (!date2) {
