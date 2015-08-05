@@ -48,6 +48,21 @@
 	</menu>
 
 	<app class="">
+		<actionsheet id="eventDetailOptions" class="hidden">
+			<actionlist>
+				<actiongroup>
+					<action id="openInMaps" class="touchable">Open in Maps</action>
+					<action id="editEvent" class="touchable disabled">Edit Event</action>
+				</actiongroup>
+				<actiongroup>
+					<action id="reportEvent" class="red touchable">Report Event</action>
+					<action id="deleteEvent" class="red touchable disabled">Delete Event</action>
+				</actiongroup>
+				<actiongroup>
+					<action id="cancel" class="bold touchable">Cancel</action>
+				</actiongroup>
+			</actionlist>
+		</actionsheet>
 		<modal id="addEvent" class="viewportBottom">
 			<top>
 				<i id="btn_cancel" class="item touchable">
@@ -102,19 +117,23 @@
 				<navbar>
 					<left>
 						<i id="btn_back" class="icon touchable">
-							<img src="img/nav-back.svg">
+							<img src="img/nav-down.svg">
 						</i>
 					</left>
 					<right>
 						<i id="btn_attendees" class="iconNumber touchable">
 							<label><!-- replaced by query --></label>
 						</i>
+						<i id="btn_options" class="icon touchable">
+							<img src="img/nav-options.svg">
+						</i>
 					</right>
 				</navbar>
+				<fulldate></fulldate>
 				<event>
+					<place></place><vicinity></vicinity>
 					<date>
 						<fromnow></fromnow>
-						<fulldate></fulldate>
 					</date>
 					<name></name>
 				</event>
@@ -123,11 +142,12 @@
 			
 			<bottom>
 				<form id="frm_eventMessage" class="hidden">
-					<input id="txt_text" type="text">
+					<input id="txt_text" type="text" placeholder="Type a message">
 					<button id="btn_sendMessage" type="submit">Send</button>
 				</form>
 				<button id="btn_attendEvent" class="action touchable hidden">
-					<img src="img/btn-attend.svg" id="">
+					<!--<img src="img/btn-attend.svg" id="">-->
+					Join this event
 				</button>
 			</bottom>
 		</modal>
@@ -254,6 +274,7 @@
 		</place>
 	</script>
 	<script id="mapHolder"></script>
+	<canvas id="staticMapHolder" class="hidden" width="1024" height="1024"></canvas>
 
 	<script src="cordova.js"></script>
 	<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true&libraries=places"></script>

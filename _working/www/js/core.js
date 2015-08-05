@@ -582,37 +582,60 @@ var views = {
 					return false;
 				}
 			},
+			uploadMap : function(){
+				return $.Deferred(function(um){
+					var geo = new Parse.GeoPoint({latitude: parseFloat($('modal#addEvent #frm_newEvent #txt_placeLatitude').val()), longitude: parseFloat($('modal#addEvent #frm_newEvent #txt_placeLongitude').val())});
+					//get the file ready
+					utility.getStaticMap(geo.latitude, geo.longitude).done(function(base64string){
+						var mapFile = new Parse.File("staticmap.png", { base64: base64string}, "image/png");
+						mapFile.save().then(function(file){
+							//save success
+							//DEBUG
+							um.resolve(file);
+						}, function(error){
+							console.error('Could not save staticmap to Parse');
+							um.reject(error);
+						});
+					});
+				}).promise();
+			},
 			createEvent : function(){
 				//update when the last message was to prevent spamming events with messages
 				meta.lastEventSubmittedAt = new Date();
+				var geo = new Parse.GeoPoint({latitude: parseFloat($('modal#addEvent #frm_newEvent #txt_placeLatitude').val()), longitude: parseFloat($('modal#addEvent #frm_newEvent #txt_placeLongitude').val())});
+
 				var eAt = moment($('modal#addEvent #frm_newEvent #dte_eventAt').val()).local().valueOf();
 				//save the message to Parse
 				var Event = Parse.Object.extend('Event');
 				var ev = new Event();
-				ev.set('name', $('modal#addEvent #frm_newEvent #txt_name').val());
-				ev.set('eventAt', new Date(eAt));
-				ev.set('createdBy', Parse.User.current());
-				ev.set('place', $('modal#addEvent #frm_newEvent #txt_placeName').val());
-				ev.set('vicinity', $('modal#addEvent #frm_newEvent #txt_placeVicinity').val());
-				ev.set('eventGeo', new Parse.GeoPoint({latitude: parseFloat($('modal#addEvent #frm_newEvent #txt_placeLatitude').val()), longitude: parseFloat($('modal#addEvent #frm_newEvent #txt_placeLongitude').val())}))
-				ev.set('public', $('modal#addEvent #frm_newEvent #chk_public').prop('checked'));
-				ev.set('deleted', false);
-				ev.set('tags', utility.getHashtags( $('modal#addEvent #frm_newEvent #txt_tags').val() ));
-				ev.save(null, {
-					success: function(createdEvent){
-						console.log('Created event ID: ' + createdEvent.id);
-						//now that the event is created, tell the system the user creating it is going to attend
-						views.modals.addEvent.createAttendance(createdEvent);
-					},
-					error: function(error){
-						navigator.notification.alert(
-							"Could not create this event.  Not sure why, but we're looking at it.", 
-							null, 
-							"Oops!",
-							"OK"
-						);
-						console.error(error);
-					}
+
+				views.modals.addEvent.uploadMap().done(function(parseFileObject){
+					ev.set('name', $('modal#addEvent #frm_newEvent #txt_name').val());
+					ev.set('eventAt', new Date(eAt));
+					ev.set('createdBy', Parse.User.current());
+					ev.set('place', $('modal#addEvent #frm_newEvent #txt_placeName').val());
+					ev.set('vicinity', $('modal#addEvent #frm_newEvent #txt_placeVicinity').val());
+					ev.set('eventGeo', geo);
+					ev.set('public', $('modal#addEvent #frm_newEvent #chk_public').prop('checked'));
+					ev.set('deleted', false);
+					ev.set('map', parseFileObject);
+					ev.set('tags', utility.getHashtags( $('modal#addEvent #frm_newEvent #txt_tags').val() ));
+					ev.save(null, {
+						success: function(createdEvent){
+							console.log('Created event ID: ' + createdEvent.id);
+							//now that the event is created, tell the system the user creating it is going to attend
+							views.modals.addEvent.createAttendance(createdEvent);
+						},
+						error: function(error){
+							navigator.notification.alert(
+								"Could not create this event.  Not sure why, but we're looking at it.", 
+								null, 
+								"Oops!",
+								"OK"
+							);
+							console.error(error);
+						}
+					});
 				});
 			},
 			createAttendance : function(eventObject){
@@ -814,10 +837,15 @@ var views = {
 
 							var lat = event.get('eventGeo').latitude;
 							var lng = event.get('eventGeo').longitude;
-							$('modal#eventDetail event name').html(event.get('name'));
-							$('modal#eventDetail event date fromnow').html(moment(event.get('eventAt').valueOf()).fromNow());
-							$('modal#eventDetail event date fulldate').html(utility.formatDate(event.get('eventAt')));
-							$('modal#eventDetail top').css('background-image','url(http://maps.googleapis.com/maps/api/staticmap?center='+lat+','+lng+'&zoom=15&format=png&sensor=false&size=640x480&maptype=roadmap&style=element:labels.icon|visibility:off&style=feature:administrative.country|element:labels|visibility:off&style=feature:administrative.province|element:labels|visibility:off&style=feature:road|visibility:simplified&style=feature:road.local|element:labels|visibility:off&style=feature:road.arterial|element:labels.icon|visibility:off&style=feature:water|visibility:simplified&style=feature:landscape|visibility:simplified&style=feature:poi|visibility:simplified&style=element:labels|visibility:off&style=feature:transit|element:geometry|visibility:off&style=feature:road)');
+							$('modal#eventDetail name').html(event.get('name'));
+							$('modal#eventDetail date fromnow').html(moment(event.get('eventAt').valueOf()).fromNow());
+							$('modal#eventDetail fulldate').html(utility.formatDate(event.get('eventAt')));
+							$('modal#eventDetail place').html( event.get('place') );
+							if (event.get('vicinity').length > 0) {
+								$('modal#eventDetail vicinity').html( event.get('vicinity') );
+							}
+							$('modal#eventDetail top').css('background-image','url(' + event.get('map').url() + ')');
+							
 							
 							//retrieve messages for this event
 								views.modals.eventDetail.getMessages(event, true);
@@ -960,6 +988,7 @@ var views = {
 				$('modal#eventDetail #btn_attendance').hammer().off('tap');
 				$('modal#eventDetail #btn_attendEvent').hammer().off('tap');
 				$('modal#eventDetail #frm_eventMessage').off('submit');
+				$('modal#eventDetail #btn_options').hammer().off('tap');
 			},
 			addE : function(){
 				$('modal#eventDetail #btn_back').hammer().on('tap', function(){
@@ -1003,7 +1032,8 @@ var views = {
 					);
 				});
 				$('modal#eventDetail #frm_eventMessage').on('submit', function(e){
-					if (meta.lastEventMessageAt >= new Date().subSeconds(1.5)) {
+					if (meta.lastEventMessageAt >= new Date().subSeconds(1.5) || $('modal#eventDetail #frm_eventMessage #txt_text').val() == '') {
+						//DEBUG
 						console.log('Prevented message spam');
 					} else {
 						//update when the last message was to prevent spamming events with messages
@@ -1037,6 +1067,7 @@ var views = {
 					}
 					e.preventDefault();
 				});
+				$('modal#eventDetail #btn_options').hammer().on('tap', views.actionsheets.eventDetailOptions.show);
 			},
 			remListE : function(){
 				return $.Deferred(function(f){
@@ -1047,6 +1078,73 @@ var views = {
 			addListE : function(){
 				return $.Deferred(function(f){
 					//add some events here
+					f.resolve();
+				}).promise();
+			}
+		}
+	},
+	actionsheets : {
+		eventDetailOptions : {
+			initialize : function(){
+				//do not call this method to load - call show()
+				$.when( views.actionsheets.eventDetailOptions.remE() ).done( views.actionsheets.eventDetailOptions.addE() );
+			},
+			show : function(){
+				//UI constructor
+
+				//check if user should be able to use EDIT and DELETE buttons
+				if( meta.lastEvent.get('createdBy').id == Parse.User.current().id ){
+					//user should be able to use them
+					$('actionsheet#eventDetailOptions action#editEvent').removeClass('disabled');
+					$('actionsheet#eventDetailOptions action#deleteEvent').removeClass('disabled');
+					//re-init the touch constructor
+					touch.reset();
+				} else {
+					//user should not, so ensure they are disabled
+					$('actionsheet#eventDetailOptions action#editEvent').addClass('disabled');
+					$('actionsheet#eventDetailOptions action#deleteEvent').addClass('disabled');
+				}
+				//now init the actionsheet events
+				views.actionsheets.eventDetailOptions.initialize();
+				//show the actionsheet
+				$('actionsheet#eventDetailOptions').removeClass('hidden');
+			},
+			hide : function(){
+				//UI deconstructor
+				setTimeout(function(){
+					$('actionsheet#eventDetailOptions').addClass('hidden');
+				},600);
+			},
+			remE : function(){
+				return $.Deferred(function(f){
+					//remove some events here
+					$('actionsheet#eventDetailOptions action').hammer().off('tap');
+
+					f.resolve();
+				}).promise();
+			},
+			addE : function(){
+				return $.Deferred(function(f){
+					//add some events here
+					$('actionsheet#eventDetailOptions action#openInMaps.touchable').hammer().on('tap', function(){
+						if (device.platform.toLowerCase() == "ios"){
+							window.open('http://maps.apple.com/?q=' + meta.lastEvent.get('eventGeo').latitude + ',' + meta.lastEvent.get('eventGeo').longitude, '_system');
+						} else if (device.platform.toLowerCase() == "android"){
+							window.open('geo:' + meta.lastEvent.get('eventGeo').latitude + ',' + meta.lastEvent.get('eventGeo').longitude, '_system');
+						}
+						views.actionsheets.eventDetailOptions.hide();
+					});
+					$('actionsheet#eventDetailOptions action#editEvent.touchable').not('.disabled').hammer().on('tap', function(){
+						alert('Edit event code here');
+					});
+					$('actionsheet#eventDetailOptions action#reportEvent.touchable').hammer().on('tap', function(){
+						alert('Report event code here');
+					});
+					$('actionsheet#eventDetailOptions action#deleteEvent.touchable').not('.disabled').hammer().on('tap', function(){
+						alert('Delete event code here');
+					});
+					$('actionsheet#eventDetailOptions action#cancel.touchable').hammer().on('tap', views.actionsheets.eventDetailOptions.hide);
+
 					f.resolve();
 				}).promise();
 			}
@@ -1334,6 +1432,21 @@ var utility = {
 			} else {
 				gpf.resolve(meta.googlePlaLastResults);
 			}
+		}).promise();
+	},
+	getStaticMap : function(latitude, longitude){
+		return $.Deferred(function(gsm){
+			var uri = 'http://maps.googleapis.com/maps/api/staticmap?center=' + latitude + ',' + longitude + '&zoom=15&scale=2&format=png&sensor=false&size=640x640&maptype=roadmap&style=element:labels.icon|visibility:off&style=feature:administrative.country|element:labels|visibility:off&style=feature:administrative.province|element:labels|visibility:off&style=feature:road|visibility:simplified&style=feature:road.local|element:labels|visibility:off&style=feature:road.arterial|element:labels.icon|visibility:off&style=feature:water|visibility:simplified&style=feature:landscape|visibility:simplified&style=feature:poi|visibility:simplified&style=element:labels|visibility:off&style=feature:transit|element:geometry|visibility:off&style=feature:road';
+			var mapImage = new Image();
+			var can = document.getElementById('staticMapHolder');
+			var ctx = can.getContext('2d');
+			mapImage.onload = function(){
+				ctx.drawImage(mapImage,0,0);
+				//DEBUG
+				//console.log(can.toDataURL('image/png',1));
+				gsm.resolve( can.toDataURL('image/png',1).substr(22) );
+			}
+			mapImage.src = uri;
 		}).promise();
 	},
 };

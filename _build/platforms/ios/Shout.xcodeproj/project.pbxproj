@@ -51,8 +51,8 @@
 		8206218C1B53F4DD0028A92B /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8206218B1B53F4DD0028A92B /* Images.xcassets */; };
 		8206218E1B53F5910028A92B /* Launch Screen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 8206218D1B53F5910028A92B /* Launch Screen.xib */; };
 		820621901B53F5EA0028A92B /* launch@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8206218F1B53F5EA0028A92B /* launch@2x.png */; };
+		820DDAF51B727452005108DF /* icon512.png in Resources */ = {isa = PBXBuildFile; fileRef = 820DDAF41B727452005108DF /* icon512.png */; };
 		8B1559CDB86941CF932FC5A0 /* CDVInAppBrowser.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ABC7B90701C42C18EF8C95F /* CDVInAppBrowser.m */; };
-		9B5A9A041B7196DC00F564BB /* icon512.png in Resources */ = {isa = PBXBuildFile; fileRef = 9B5A9A031B7196DC00F564BB /* icon512.png */; };
 		A8A3AB1BE05847E288E58B03 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 119A0FEDDE334D97821C63FD /* SystemConfiguration.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		B716D5F3231740BEAFA4D203 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F743B297C5D9497F8DCD2EA8 /* ImageIO.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		B87183FF915944A0A86E763D /* CDVLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = 7CAA35879AEF42A9AAF187A0 /* CDVLogger.m */; };
@@ -136,8 +136,8 @@
 		8206218B1B53F4DD0028A92B /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Shout/Images.xcassets; sourceTree = SOURCE_ROOT; };
 		8206218D1B53F5910028A92B /* Launch Screen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = "Launch Screen.xib"; sourceTree = "<group>"; };
 		8206218F1B53F5EA0028A92B /* launch@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "launch@2x.png"; sourceTree = "<group>"; };
+		820DDAF41B727452005108DF /* icon512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon512.png; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Shout-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "Shout-Info.plist"; path = "../Shout-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
-		9B5A9A031B7196DC00F564BB /* icon512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon512.png; sourceTree = "<group>"; };
 		9D5E00483C9C4B1F80D2E07C /* CDVJpegHeaderWriter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CDVJpegHeaderWriter.m; path = "cordova-plugin-camera/CDVJpegHeaderWriter.m"; sourceTree = "<group>"; };
 		B6CA34176D5C441ABD7C0906 /* CDVVibration.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CDVVibration.m; path = "cordova-plugin-vibration/CDVVibration.m"; sourceTree = "<group>"; };
 		B7CF3D9DD78442AC887E550A /* CDVExif.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CDVExif.h; path = "cordova-plugin-camera/CDVExif.h"; sourceTree = "<group>"; };
@@ -231,7 +231,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				9B5A9A031B7196DC00F564BB /* icon512.png */,
+				820DDAF41B727452005108DF /* icon512.png */,
 				8206218F1B53F5EA0028A92B /* launch@2x.png */,
 				8206218B1B53F4DD0028A92B /* Images.xcassets */,
 				308D052D1370CCF300D202BF /* icons */,
@@ -452,7 +452,7 @@
 				7E7966E11810823500FA85AD /* icon-50@2x.png in Resources */,
 				7E7966E51810823500FA85AD /* icon-76@2x.png in Resources */,
 				30FC414916E50CA1004E6F35 /* icon-72@2x.png in Resources */,
-				9B5A9A041B7196DC00F564BB /* icon512.png in Resources */,
+				820DDAF51B727452005108DF /* icon512.png in Resources */,
 				4C2EA4A3C2EA498586B5D75F /* CDVNotification.bundle in Resources */,
 				820621901B53F5EA0028A92B /* launch@2x.png in Resources */,
 			);

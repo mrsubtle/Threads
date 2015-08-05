@@ -118,4 +118,7 @@
     <gap:splash gap:platform="ios" height="768" src="www/res/screen/ios/screen-ipad-landscape.png" width="1024" />
 
     <access origin="*" />
+    <access origin="tel:*" launch-external="yes" />
+    <access origin="sms:*" launch-external="yes" />
+    <access origin="geo:*" launch-external="yes" />
 </widget>
