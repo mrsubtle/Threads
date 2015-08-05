@@ -395,6 +395,11 @@ var views = {
 									if ($('screen#start content #nextEvents list').children().length == 0) {
 										$('screen#start content #nextEvents list').html('No events coming up in the next two days.<br>Why not create one?');
 									}
+									//set name field lengths for truncation
+									$('screen#start list item').each(function(){
+										var dateWidth = $(this).children('date').innerWidth();
+										$(this).children('name').css('right', ((dateWidth + 20 )/10) + 'rem');
+									});
 									//add event handlers for generated list items
 									$.when( views.screens.start.remListE() ).done( views.screens.start.addListE() );
 									//remove loading indicators
@@ -436,6 +441,11 @@ var views = {
 									if ($('screen#start content #nearbyEvents list').children().length == 0) {
 										$('screen#start content #nearbyEvents list').html('No events nearby.<br>Create one now!');
 									}
+									//set name field lengths for truncation
+									$('screen#start list item').each(function(){
+										var dateWidth = $(this).children('date').innerWidth();
+										$(this).children('name').css('right', ((dateWidth + 20 )/10) + 'rem');
+									});
 									//add event handlers for generated list items
 									$.when( views.screens.start.remListE() ).done( views.screens.start.addListE() );
 									//remove loading indicators
