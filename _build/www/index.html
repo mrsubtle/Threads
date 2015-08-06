@@ -196,7 +196,7 @@
 				</child>
 			</middle>
 		</screen>
-		<screen id="start" class="hasNav hasBottom hidden">
+		<screen id="start" class="hasNav hidden">
 			<nav>
 				<left>
 					<i id="btn_toggleMenu" class="touchable">
@@ -213,20 +213,19 @@
 
 			<content>
 				<group id="nextEvents">
-					<groupHeader>
-						Coming up
-					</groupHeader>
-					<list>
-						No events coming up in the next two days.<br>Why not create one?
-					</list>
+					<header>
+						Next up...
+					</header>
+					<list></list>
+					<footer class="hidden">
+						...and <span id="nextEventsCount">#</span> more
+					</footer>
 				</group>
 				<group id="nearbyEvents">
-					<groupHeader>
-						Happening nearby
-					</groupHeader>
-					<list>
-						No events nearby.<br>Create one now!
-					</list>
+					<header>
+						<span id="nearbyEventsCount">#</span> nearby
+					</header>
+					<list></list>
 				</group>
 			</content>
 
@@ -245,6 +244,33 @@
 			</name>
 			<date>
 				<%= eventFromNow %>
+			</date>
+		</item>
+	</script>
+	<script id="tpl_nextEventsItem" type="text/template">
+		<item class="touchable" data-id="<%= id %>">
+			<name>
+				<%= name %>
+			</name>
+			<place>
+				<strong><%= place %></strong> &middot; <%= vicinity %>
+			</place>
+			<date>
+				<strong><%= eventFromNow %></strong>  &middot; <%= eventAtFormatted %>
+			</date>
+		</item>
+	</script>
+	<script id="tpl_nearbyEventsItem" type="text/template">
+		<item class="touchable" data-id="<%= id %>">
+			<mapimage style="background-image: url(img/angle-fafafa-tx.svg), url(<%= mapURL %>)"></mapimage>
+			<name>
+				<%= name %>
+			</name>
+			<place>
+				<strong><%= place %></strong> &middot; <%= vicinity %>
+			</place>
+			<date>
+				<strong><%= eventFromNow %></strong>  &middot; <%= eventAtFormatted %>
 			</date>
 		</item>
 	</script>

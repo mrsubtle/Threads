@@ -7,7 +7,7 @@
 	<key>IDESourceControlProjectIdentifier</key>
 	<string>10D78FE5-2C00-4DB8-9AE2-C5F9F785182A</string>
 	<key>IDESourceControlProjectName</key>
-	<string>project</string>
+	<string>Shout</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
 		<key>36840EBA302F74A9981AD4617C14378F8FD6C370</key>
@@ -16,7 +16,7 @@
 		<string>https://github.com/mrsubtle/Threads.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>_build/platforms/ios/Shout.xcodeproj/project.xcworkspace</string>
+	<string>_build/platforms/ios/Shout.xcodeproj</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
 		<key>36840EBA302F74A9981AD4617C14378F8FD6C370</key>

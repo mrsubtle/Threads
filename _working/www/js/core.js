@@ -357,10 +357,11 @@ var views = {
 						//force the data update
 						//get #nextEvents attendance data
 							//Indicate loading
-							$('screen#start content #nextEvents list').html('Loading data...');
-							$('screen#start content #nearbyEvents list').html('Loading data...');
-							// load event template
-							var t = _.template( $('#tpl_eventListItem').html() );
+							$('screen#start content group#nextEvents list').html('Loading data...');
+							$('screen#start content group#nearbyEvents list').html('Loading data...');
+							// load event templates
+							var tNearbyEventsItem = _.template( $('#tpl_nearbyEventsItem').html() );
+							var tNextEventsItem = _.template( $('#tpl_nextEventsItem').html() );
 
 							//retrieve data from Parse
 							var Event = Parse.Object.extend("Event");
@@ -376,24 +377,38 @@ var views = {
 									console.log('Successfully retrieved accepted Attendance records for current user');
 									meta.userAttendance = _.sortBy(results, function(i){ return i.get('event').get('eventAt'); });
 									//clear the list
-									$('screen#start content #nextEvents list').html('');
+									$('screen#start content group#nextEvents list').html('');
 									_.each(meta.userAttendance,function(o,i,a){
 										// o = individual object
 										// i = array index ##
 										// a = full array
 										// get the event associated with this attendance object
 										var e = o.get('event');
-										if (e.get('eventAt') >= new Date().subHours(2) && e.get('eventAt') <= new Date().addHours(24)){
-											// build display object
-											var dO = {}
-											dO.id = e.id;
-											dO.name = e.get('name');
-											dO.eventFromNow = moment(e.get('eventAt').valueOf()).fromNow();
-											$('screen#start content #nextEvents list').append( t(dO) );
+										if (e.get('eventAt') <= new Date().subHours(2)){
+											meta.userAttendance.splice(i,1);
 										}
 									});
-									if ($('screen#start content #nextEvents list').children().length == 0) {
-										$('screen#start content #nextEvents list').html('No events coming up in the next two days.<br>Why not create one?');
+									if (meta.userAttendance.length > 0) {
+										// build display object
+										var dO = {}
+										dO.id = meta.userAttendance[0].get('event').id;
+										dO.name = meta.userAttendance[0].get('event').get('name');
+										dO.eventFromNow = moment(meta.userAttendance[0].get('event').get('eventAt').valueOf()).fromNow();
+										dO.eventAtFormatted = utility.formatDate(meta.userAttendance[0].get('event').get('eventAt').valueOf());
+										dO.place = meta.userAttendance[0].get('event').get('place');
+										dO.vicinity = meta.userAttendance[0].get('event').get('vicinity');
+										$('screen#start content group#nextEvents').css( 'background-image', 'url(img/angle-ffffff.svg), url('+meta.userAttendance[0].get('event').get('map').url()+')' );
+										$('screen#start content group#nextEvents list').html( tNextEventsItem(dO) );
+										if (meta.userAttendance.length > 1) {
+											$('screen#start content group#nextEvents #nextEventsCount').html( meta.userAttendance.length - 1 );
+											$('screen#start content group#nextEvents footer').removeClass('hidden');
+										} else {
+											$('screen#start content group#nextEvents footer').addClass('hidden');
+										}
+									}
+									else {
+										$('screen#start content group#nextEvents').css( 'background-image', 'url(img/angle-ffffff.svg), none' );
+										$('screen#start content #nextEvents list').html('No events coming up.<br>Why not create one?');
 									}
 									//set name field lengths for truncation
 									$('screen#start list item').each(function(){
@@ -414,17 +429,17 @@ var views = {
 							//define Nearby Event query
 							var nearbyEventQuery = new Parse.Query(Event);
 							nearbyEventQuery.equalTo('public', true);
-							nearbyEventQuery.notEqualTo('createdBy', Parse.User.current());
 							nearbyEventQuery.greaterThan('eventAt', new Date().subMinutes(45));
+							nearbyEventQuery.notEqualTo('createdBy', Parse.User.current());
 							nearbyEventQuery.withinKilometers('eventGeo', Parse.User.current().get('Geo'), (meta.userP.searchRadiusInMeters/1000));
 							//nearbyEventQuery.withinKilometers(100.0);
-							nearbyEventQuery.limit(10);
+							nearbyEventQuery.limit(20);
 							nearbyEventQuery.find({
 								success: function(ev){
 									meta.userEventsNearby = _.sortBy(ev, function(i){ return i.get('eventAt'); });
 									console.log('Successfully retrieved nearby Event records for current user');
 									//clear the list
-									$('screen#start content #nearbyEvents list').html('');
+									$('screen#start content group#nearbyEvents list').html('');
 									_.each(meta.userEventsNearby, function(o,i,a){
 										// o = individual object
 										// i = array index ##
@@ -435,11 +450,15 @@ var views = {
 										dO.id = o.id;
 										dO.name = o.get('name');
 										dO.eventFromNow = moment(o.get('eventAt').valueOf()).fromNow();
-										$('screen#start content #nearbyEvents list').append( t(dO) );
-										
+										dO.eventAtFormatted = utility.formatDate(o.get('eventAt').valueOf());
+										dO.place = o.get('place');
+										dO.vicinity = o.get('vicinity');
+										dO.mapURL = o.get('map').url();
+										$('screen#start content group#nearbyEvents list').append( tNearbyEventsItem(dO) );
 									});
-									if ($('screen#start content #nearbyEvents list').children().length == 0) {
-										$('screen#start content #nearbyEvents list').html('No events nearby.<br>Create one now!');
+									$('screen#start content group#nearbyEvents #nearbyEventsCount').html( meta.userEventsNearby.length );
+									if ($('screen#start content group#nearbyEvents list').children().length == 0) {
+										$('screen#start content group#nearbyEvents list').html('No events nearby.<br>Create one now!');
 									}
 									//set name field lengths for truncation
 									$('screen#start list item').each(function(){
