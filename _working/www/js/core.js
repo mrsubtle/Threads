@@ -477,7 +477,7 @@ var views = {
 							});
 					}
 					df.resolve();
-				});
+				}).promise();
 			},
 			render : function(){
 				$('app screen').addClass('hidden');
